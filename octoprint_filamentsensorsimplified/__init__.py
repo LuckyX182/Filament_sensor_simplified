@@ -162,7 +162,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 # compatibility flags according to what Python versions your plugin supports!
 #__plugin_pythoncompat__ = ">=2.7,<3" # only python 2
 #__plugin_pythoncompat__ = ">=3,<4" # only python 3
-#__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
+__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
 
 __plugin_name__ = "Filament Sensor Simplified"
 __plugin_version__ = "0.1.0"
