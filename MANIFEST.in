@@ -1,0 +1,4 @@
+include README.md
+recursive-include octoprint_Filament_Sensor_Simplified/templates *
+recursive-include octoprint_Filament_Sensor_Simplified/translations *
+recursive-include octoprint_Filament_Sensor_Simplified/static *
