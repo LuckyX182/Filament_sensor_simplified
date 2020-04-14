@@ -1,6 +1,9 @@
 # Filament sensor simplified
 
-**TODO:** Describe what your plugin does.
+This plugin reacts to filament sensor output. If triggered it issues M600 X0 Y0 command to printer.
+It is based on Octoprint-Filament-Reloaded by kontakt but the logic behind is different.
+
+This was only tested on my printer running Marlin 2.0.4.4 so sorry if any bugs present.
 
 ## Setup
 
@@ -9,9 +12,7 @@ or manually using this URL:
 
     https://github.com/luckyx182/Filament_sensor_simplified/archive/master.zip
 
-**TODO:** Describe how to install your plugin, if more needs to be done than just installing it via pip or through
-the plugin manager.
-
 ## Configuration
 
-**TODO:** Describe your plugin's configuration options (if any).
+Configuration couldn't be simpler, all you need is to configure listening board pin (board mode) and if the switch is normally open or closed.
+Default pin is 22 and normally closed.
