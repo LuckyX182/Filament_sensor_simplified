@@ -28,19 +28,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def switch(self):
 		return int(self._settings.get(["switch"]))
 
-	@property
-	def mode(self):
-		return int(self._settings.get(["mode"]))
-
 	def _setup_sensor(self):
 		if self.sensor_enabled():
 			self._logger.info("Setting up sensor.")
-			if self.mode == 0:
-				self._logger.info("Using Board Mode")
-				GPIO.setmode(GPIO.BOARD)
-			else:
-				self._logger.info("Using BCM Mode")
-				GPIO.setmode(GPIO.BCM)
+			self._logger.info("Using Board Mode")
+			GPIO.setmode(GPIO.BOARD)
+
 			self._logger.info("Filament Sensor active on GPIO Pin [%s]" % self.pin)
 			GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		else:
