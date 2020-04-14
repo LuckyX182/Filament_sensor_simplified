@@ -7,9 +7,10 @@ from octoprint.events import Events
 import RPi.GPIO as GPIO
 from time import sleep
 
-class Filament_sensor_simplifiedPlugin(octoprint.plugin.SettingsPlugin,
-                                       octoprint.plugin.AssetPlugin,
-                                       octoprint.plugin.TemplatePlugin):
+class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
+                             octoprint.plugin.EventHandlerPlugin,
+                             octoprint.plugin.TemplatePlugin,
+                             octoprint.plugin.SettingsPlugin):
 
 	def initialize(self):
 		self._logger.info("Running RPi.GPIO version '{0}'".format(GPIO.VERSION))
@@ -77,8 +78,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.SettingsPlugin,
 
 	def get_settings_defaults(self):
 		return dict(
-			pin=22,  # Default is no pin
-			switch=0,  # Normally Open
+			pin=22,  # Default is 22
+			switch=1,  # Normally closed
 			mode=0,  # Board Mode
 		)
 
