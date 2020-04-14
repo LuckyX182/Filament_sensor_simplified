@@ -1,39 +1,147 @@
 # coding=utf-8
 from __future__ import absolute_import
 
-### (Don't forget to remove me)
-# This is a basic skeleton for your plugin's __init__.py. You probably want to adjust the class name of your plugin
-# as well as the plugin mixins it's subclassing from. This is really just a basic skeleton to get you started,
-# defining your plugin as a template plugin, settings and asset plugin. Feel free to add or remove mixins
-# as necessary.
-#
-# Take a look at the documentation on what other plugin mixins are available.
-
 import octoprint.plugin
+import re
+from octoprint.events import Events
+import RPi.GPIO as GPIO
+from time import sleep
 
 class Filament_sensor_simplifiedPlugin(octoprint.plugin.SettingsPlugin,
                                        octoprint.plugin.AssetPlugin,
                                        octoprint.plugin.TemplatePlugin):
 
-	##~~ SettingsPlugin mixin
+	def initialize(self):
+		self._logger.info("Running RPi.GPIO version '{0}'".format(GPIO.VERSION))
+		if GPIO.VERSION < "0.6":  # Need at least 0.6 for edge detection
+			raise Exception("RPi.GPIO must be greater than 0.6")
+		GPIO.setwarnings(False)  # Disable GPIO warnings
+		self.print_head_parking = False
+		self.print_head_parked = False
+
+	@property
+	def pin(self):
+		return int(self._settings.get(["pin"]))
+
+	@property
+	def switch(self):
+		return int(self._settings.get(["switch"]))
+
+	@property
+	def mode(self):
+		return int(self._settings.get(["mode"]))
+
+	def _setup_sensor(self):
+		if self.sensor_enabled():
+			self._logger.info("Setting up sensor.")
+			if self.mode == 0:
+				self._logger.info("Using Board Mode")
+				GPIO.setmode(GPIO.BOARD)
+			else:
+				self._logger.info("Using BCM Mode")
+				GPIO.setmode(GPIO.BCM)
+			self._logger.info("Filament Sensor active on GPIO Pin [%s]" % self.pin)
+			GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		else:
+			self._logger.info("Pin not configured, won't work unless configured!")
+
+	def get_position_info(self):
+		self._logger.debug("Sending M114 command")
+		self._printer.commands("M114")
+
+	def get_head_position(self, comm, line, *args, **kwargs):
+		if re.search("^X:.* Y:.* Z:.* E:.*", line):
+			self._logger.debug("Received coordinates, processing...")
+			self.extract_xy_position(line)
+		return line
+
+	def extract_xy_position(self, arg):
+		initial_list = arg.split(" ")[:2]
+		xy_coordinates = []
+		for item in initial_list:
+			xy_coordinates.append(item.split(":")[1])
+		self._logger.debug("Parsed coordinates are: X%s Y%s", xy_coordinates[0], xy_coordinates[1])
+		self.set_head_parked(xy_coordinates)
+
+	def set_head_parked(self, xy_coordinates):
+		if xy_coordinates[0] == "0.00" and xy_coordinates[1] == "0.00":
+			self._logger.debug("Print head is parked")
+			self.print_head_parked = True
+		else:
+			self._logger.debug("Print head is not parked")
+			self.print_head_parked = False
+
+	def on_after_startup(self):
+		self._logger.info("Filament Sensor Reloaded started")
+		self._setup_sensor()
 
 	def get_settings_defaults(self):
 		return dict(
-			# put your plugin's default settings here
+			pin=22,  # Default is no pin
+			switch=0,  # Normally Open
+			mode=0,  # Board Mode
 		)
 
-	##~~ AssetPlugin mixin
+	def on_settings_save(self, data):
+		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
+		self._setup_sensor()
 
-	def get_assets(self):
-		# Define your plugin's asset files to automatically include in the
-		# core UI here.
-		return dict(
-			js=["js/Filament_Sensor_Simplified.js"],
-			css=["css/Filament_Sensor_Simplified.css"],
-			less=["less/Filament_Sensor_Simplified.less"]
-		)
+	def sensor_enabled(self):
+		return self.pin != -1
 
-	##~~ Softwareupdate hook
+	def no_filament(self):
+		return GPIO.input(self.pin) != self.switch
+
+	def get_template_configs(self):
+		return [dict(type="settings", custom_bindings=False)]
+
+	def on_event(self, event, payload):
+		# Early abort in case of out ot filament when start printing, as we
+		# can't change with a cold nozzle
+		if event is Events.PRINT_STARTED and self.no_filament():
+			self._logger.info("Printing aborted: no filament detected!")
+			self._printer.cancel_print()
+		# Enable sensor
+		if event in (
+				Events.PRINT_STARTED,
+				Events.PRINT_RESUMED
+		):
+			self._logger.info("%s: Enabling filament sensor." % (event))
+			if self.sensor_enabled():
+				self.print_head_parking = False
+				self.print_head_parked = False
+				GPIO.remove_event_detect(self.pin)
+				GPIO.add_event_detect(
+					self.pin, GPIO.BOTH,
+					callback=self.sensor_callback,
+					bouncetime=self.bounce
+				)
+		# Disable sensor
+		elif event in (
+				Events.PRINT_DONE,
+				Events.PRINT_FAILED,
+				Events.PRINT_CANCELLED,
+				Events.ERROR
+		):
+			self._logger.info("%s: Disabling filament sensor." % (event))
+			GPIO.remove_event_detect(self.pin)
+
+	def sensor_callback(self, _):
+		self.get_position_info()
+		sleep(1)
+
+		if self.no_filament() and not self.print_head_parked:
+			self._logger.info("Out of filament!")
+			if self.print_head_parking:
+				self._logger.info("Waiting for print head to park")
+				return
+			self._logger.info("Sending out of filament GCODE")
+			self._printer.commands("M600 X0 Y0")
+			self.print_head_parking = True
+		elif self.print_head_parked:
+			self.print_head_parking = False
+			if not self.no_filament():
+				self._logger.info("Filament detected!")
 
 	def get_update_information(self):
 		# Define the configuration for your plugin to use with the Software Update
@@ -74,6 +182,7 @@ def __plugin_load__():
 
 	global __plugin_hooks__
 	__plugin_hooks__ = {
-		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information
+		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
+		"octoprint.comm.protocol.gcode.received": __plugin_implementation__.get_head_position
 	}
 
