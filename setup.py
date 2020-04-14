@@ -7,7 +7,7 @@
 plugin_identifier = "Filament_Sensor_Simplified"
 
 # The plugin's python package, should be "octoprint_<plugin identifier>", has to be unique
-plugin_package = "octoprint_Filament_Sensor_Simplified"
+plugin_package = "octoprint_filamentsensorsimplified"
 
 # The plugin's human readable name. Can be overwritten within OctoPrint's internal data via __plugin_name__ in the
 # plugin module
