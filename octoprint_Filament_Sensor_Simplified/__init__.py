@@ -163,6 +163,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.SettingsPlugin,
 			)
 		)
 
+__plugin_name__ = "Filament Sensor Simplified"
+
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
 # compatibility flags according to what Python versions your plugin supports!
