@@ -114,7 +114,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.SettingsPlugin,
 				GPIO.add_event_detect(
 					self.pin, GPIO.BOTH,
 					callback=self.sensor_callback,
-					bouncetime=self.bounce
+					bouncetime=1
 				)
 		# Disable sensor
 		elif event in (
@@ -162,12 +162,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.SettingsPlugin,
 				pip="https://github.com/luckyx182/Filament_sensor_simplified/archive/{target_version}.zip"
 			)
 		)
-
-
-# If you want your plugin to be registered within OctoPrint under a different name than what you defined in setup.py
-# ("OctoPrint-PluginSkeleton"), you may define that here. Same goes for the other metadata derived from setup.py that
-# can be overwritten via __plugin_xyz__ control properties. See the documentation for that.
-__plugin_name__ = "Filament_sensor_simplified Plugin"
 
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
