@@ -15,4 +15,5 @@ or manually using this URL:
 ## Configuration
 
 Configuration couldn't be simpler, all you need is to configure listening board pin (board mode) and if the switch is normally open or closed.
+
 Default pin is -1 (not configured) and normally closed.
