@@ -98,9 +98,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def no_filament(self):
 		return GPIO.input(self.pin) != self.switch
 
-	def get_template_configs(self):
-		return [dict(type="settings", custom_bindings=False)]
-
 	def on_event(self, event, payload):
 		# Early abort in case of out ot filament when start printing, as we
 		# can't change with a cold nozzle
