@@ -32,7 +32,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# AssetPlugin hook
 	def get_assets(self):
-		return dict(js=["js/PrinterAlerts.js"])
+		return dict(js=["js/filamentsensorsimplified.js"])
 
 	# Settings hook
 	def get_settings_defaults(self):
