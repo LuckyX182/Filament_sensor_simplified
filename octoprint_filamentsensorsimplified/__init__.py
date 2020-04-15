@@ -11,7 +11,8 @@ from time import sleep
 class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 									   octoprint.plugin.EventHandlerPlugin,
 									   octoprint.plugin.TemplatePlugin,
-									   octoprint.plugin.SettingsPlugin):
+									   octoprint.plugin.SettingsPlugin,
+									   octoprint.plugin.AssetPlugin):
 
 	def initialize(self):
 		self._logger.info("Running RPi.GPIO version '{0}'".format(GPIO.VERSION))
@@ -28,6 +29,26 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	@property
 	def switch(self):
 		return int(self._settings.get(["switch"]))
+
+	# AssetPlugin hook
+	def get_assets(self):
+		return dict(js=["js/PrinterAlerts.js"])
+
+	# Settings hook
+	def get_settings_defaults(self):
+		return dict(
+			pin=-1,  # Default is -1
+			switch=1,  # Normally closed
+			mode=0,  # Board Mode
+		)
+
+	def on_after_startup(self):
+		self._logger.info("Filament Sensor Simplified started")
+		self._setup_sensor()
+
+	def on_settings_save(self, data):
+		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
+		self._setup_sensor()
 
 	def _setup_sensor(self):
 		if self.sensor_enabled():
@@ -65,21 +86,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		else:
 			self._logger.debug("Print head is not parked")
 			self.print_head_parked = False
-
-	def on_after_startup(self):
-		self._logger.info("Filament Sensor Simplified started")
-		self._setup_sensor()
-
-	def get_settings_defaults(self):
-		return dict(
-			pin=-1,  # Default is -1
-			switch=1,  # Normally closed
-			mode=0,  # Board Mode
-		)
-
-	def on_settings_save(self, data):
-		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
-		self._setup_sensor()
 
 	def sensor_enabled(self):
 		return self.pin != -1
