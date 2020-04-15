@@ -96,6 +96,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if event is Events.PRINT_STARTED and self.no_filament():
 			self._logger.info("Printing aborted: no filament detected!")
 			self._printer.cancel_print()
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="popup", msg=popup_message))
 			self._plugin_manager.send_plugin_message(self._identifier,
 													 dict(type="popup", msg="No filament detected! Print cancelled."))
 		# Enable sensor
