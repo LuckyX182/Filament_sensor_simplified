@@ -7,11 +7,11 @@
         </div>
     </div>
     <div class="control-group">
-        <label class="control-label">{{ _('Switch Type:') }}</label>
-        <div class="controls" data-toggle="tooltip" title="{{ _('Whether the sensor should trip when the switch goes HIGH or LOW, Normally Open is LOW when filament is present, and Normally Closed is HIGH when filament is present.') }}">
+        <label class="control-label">{{ _('Switch connected to:') }}</label>
+        <div class="controls" data-toggle="tooltip" title="{{ _('Specify how the switch is connected. One end of the switch must be wired to ground or 5V. Sensor is triggered when open.') }}">
             <select class="select-mini" data-bind="value: settings.plugins.filamentsensorsimplified.switch">
-                <option value=0>{{ _('Normally Open') }}</option>
-                <option value=1>{{ _('Normally Closed') }}</option>
+                <option value=0>{{ _('5V') }}</option>
+                <option value=1>{{ _('Ground') }}</option>
             </select>
         </div>
     </div>

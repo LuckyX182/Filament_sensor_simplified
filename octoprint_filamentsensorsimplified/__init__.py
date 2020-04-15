@@ -7,10 +7,11 @@ from octoprint.events import Events
 import RPi.GPIO as GPIO
 from time import sleep
 
+
 class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
-                             octoprint.plugin.EventHandlerPlugin,
-                             octoprint.plugin.TemplatePlugin,
-                             octoprint.plugin.SettingsPlugin):
+									   octoprint.plugin.EventHandlerPlugin,
+									   octoprint.plugin.TemplatePlugin,
+									   octoprint.plugin.SettingsPlugin):
 
 	def initialize(self):
 		self._logger.info("Running RPi.GPIO version '{0}'".format(GPIO.VERSION))
@@ -66,7 +67,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self.print_head_parked = False
 
 	def on_after_startup(self):
-		self._logger.info("Filament Sensor Reloaded started")
+		self._logger.info("Filament Sensor Simplified started")
 		self._setup_sensor()
 
 	def get_settings_defaults(self):
@@ -95,6 +96,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if event is Events.PRINT_STARTED and self.no_filament():
 			self._logger.info("Printing aborted: no filament detected!")
 			self._printer.cancel_print()
+			self._plugin_manager.send_plugin_message(self._identifier,
+													 dict(type="popup", msg="No filament detected! Print cancelled."))
 		# Enable sensor
 		if event in (
 				Events.PRINT_STARTED,
@@ -157,15 +160,17 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			)
 		)
 
+
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
 # compatibility flags according to what Python versions your plugin supports!
-#__plugin_pythoncompat__ = ">=2.7,<3" # only python 2
-#__plugin_pythoncompat__ = ">=3,<4" # only python 3
-__plugin_pythoncompat__ = ">=2.7,<4" # python 2 and 3
+# __plugin_pythoncompat__ = ">=2.7,<3" # only python 2
+# __plugin_pythoncompat__ = ">=3,<4" # only python 3
+__plugin_pythoncompat__ = ">=2.7,<4"  # python 2 and 3
 
 __plugin_name__ = "Filament Sensor Simplified"
 __plugin_version__ = "0.1.0"
+
 
 def __plugin_load__():
 	global __plugin_implementation__
@@ -176,4 +181,3 @@ def __plugin_load__():
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
 		"octoprint.comm.protocol.gcode.received": __plugin_implementation__.get_head_position
 	}
-
