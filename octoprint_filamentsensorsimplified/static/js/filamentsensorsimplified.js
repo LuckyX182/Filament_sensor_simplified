@@ -25,22 +25,18 @@ $(function() {
 				]);
 
 		self.onDataUpdaterPluginMessage = function(plugin, data) {
-            if (plugin != "filamentsensorsimplified") {
+            if (plugin !== "filamentsensorsimplified") {
 				console.log('Ignoring '+plugin);
                 return;
             }
 
-			if(data.type == "popup") {
-				// console.log(data.msg);
-				if(self.settingsViewModel.settings.plugins.filamentsensorsimplified.msgType() != "disabled"){
-					new PNotify({
-						title: 'Filament sensor simplified message',
-						text: data.msg,
-						type: self.settingsViewModel.settings.plugins.filamentsensorsimplified.msgType(),
-						hide: self.settingsViewModel.settings.plugins.filamentsensorsimplified.autoClose()
-						});
-				}
-			}
+            new PNotify({
+                title: 'Filament sensor simplified',
+                text: data.msg,
+                type: data.type,
+                hide: self.settingsViewModel.settings.plugins.filamentsensorsimplified.autoClose()
+                });
+
 		}
 
 		self.onBeforeBinding = function() {

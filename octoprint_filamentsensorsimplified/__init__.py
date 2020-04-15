@@ -44,14 +44,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			pin=-1,  # Default is -1
 			switch=1,  # Normally closed
 			mode=0,  # Board Mode
-			msgType="error",
 			autoClose=True,
-			enableSpeech=False,
-			speechVoice="",
-			speechVolume=1,
-			speechPitch=1,
-			speechRate=1,
-			regex_exclude=""
 		)
 
 	def on_after_startup(self):
@@ -71,6 +64,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self._logger.info("Filament Sensor active on GPIO Pin [%s]" % self.pin)
 			GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		else:
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="No filament detected! Print cancelled."))
 			self._logger.info("Pin not configured, won't work unless configured!")
 
 	def get_position_info(self):
@@ -114,7 +108,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if event is Events.PRINT_STARTED and self.no_filament():
 			self._logger.info("Printing aborted: no filament detected!")
 			self._printer.cancel_print()
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="popup", msg="No filament detected! Print cancelled."))
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", msg="No filament detected! Print cancelled."))
 		# Enable sensor
 		if event in (
 				Events.PRINT_STARTED,
