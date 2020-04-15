@@ -34,12 +34,24 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def get_assets(self):
 		return dict(js=["js/filamentsensorsimplified.js"])
 
+	# Template hooks
+	def get_template_configs(self):
+		return [dict(type="settings", custom_bindings=True)]
+
 	# Settings hook
 	def get_settings_defaults(self):
 		return dict(
 			pin=-1,  # Default is -1
 			switch=1,  # Normally closed
 			mode=0,  # Board Mode
+			msgType="error",
+			autoClose=True,
+			enableSpeech=False,
+			speechVoice="",
+			speechVolume=1,
+			speechPitch=1,
+			speechRate=1,
+			regex_exclude=""
 		)
 
 	def on_after_startup(self):

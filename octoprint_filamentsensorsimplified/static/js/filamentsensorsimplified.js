@@ -41,7 +41,7 @@ $(function() {
 				// console.log(data.msg);
 				if(self.settingsViewModel.settings.plugins.filamentsensorsimplified.msgType() != "disabled"){
 					new PNotify({
-						title: 'M117 Pop Up Message',
+						title: 'Filament sensor simplified message',
 						text: data.msg,
 						type: self.settingsViewModel.settings.plugins.filamentsensorsimplified.msgType(),
 						hide: self.settingsViewModel.settings.plugins.filamentsensorsimplified.autoClose()
