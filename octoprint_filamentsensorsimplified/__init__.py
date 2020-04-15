@@ -64,7 +64,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self._logger.info("Filament Sensor active on GPIO Pin [%s]" % self.pin)
 			GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		else:
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="No filament detected! Print cancelled."))
+			sleep(5)
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="You may have forgotten to configure this plugin,"))
 			self._logger.info("Pin not configured, won't work unless configured!")
 
 	def get_position_info(self):
