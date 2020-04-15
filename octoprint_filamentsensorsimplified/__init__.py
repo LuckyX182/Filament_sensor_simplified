@@ -101,8 +101,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def on_event(self, event, payload):
 		# Early abort in case of out ot filament when start printing, as we
 		# can't change with a cold nozzle
-		if (event is Events.USER_LOGGED_IN or Events.PRINT_STARTED) and not self.sensor_enabled():
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="You may have forgotten to configure this plugin,"))
+		if (event is Events.USER_LOGGED_IN or event is Events.PRINT_STARTED) and not self.sensor_enabled():
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="You may have forgotten to configure this plugin."))
 		if event is Events.PRINT_STARTED and self.no_filament():
 			self._logger.info("Printing aborted: no filament detected!")
 			self._printer.cancel_print()
