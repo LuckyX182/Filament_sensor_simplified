@@ -37,7 +37,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# Template hooks
 	def get_template_configs(self):
-		return [dict(type="settings", custom_bindings=True)]
+		return [dict(type="settings", custom_bindings=False)]
 
 	# Settings hook
 	def get_settings_defaults(self):
