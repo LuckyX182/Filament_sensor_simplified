@@ -172,6 +172,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				GPIO.remove_event_detect(self.pin)
 
 	def sensor_callback(self, _):
+		self._logger.info("Sensor was triggered")
 		self.get_position_info()
 		while self.getting_position:
 			sleep(0.5)
