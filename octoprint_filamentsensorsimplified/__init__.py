@@ -21,7 +21,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		GPIO.setwarnings(False)  # Disable GPIO warnings
 		self.print_head_parking = False
 		self.print_head_parked = False
-		self.isM600Supported = True
 		self.checkingM600 = False
 
 	@property
@@ -35,6 +34,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	@property
 	def m600Enabled(self):
 		return bool(self._settings.get(["m600Enabled"]))
+
+	@m600Enabled.setter
+	def m600Enabled(self, value):
+		self._m600Enabled = value
 
 	# AssetPlugin hook
 	def get_assets(self):
@@ -66,7 +69,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self._logger.info("Setting up sensor.")
 			self._logger.info("Using Board Mode")
 			GPIO.setmode(GPIO.BOARD)
-
 			self._logger.info("Filament Sensor active on GPIO Pin [%s]" % self.pin)
 			GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 		else:
@@ -83,11 +85,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if re.search("^ok", line) and self.checkingM600:
 			self._logger.debug("Printer supports M600")
-			self.isM600Supported = True
+			self.m600Enabled = True
 			self.checkingM600 = False
 		elif self.checkingM600:
 			self._logger.debug("Printer doesn't support M600")
-			self.isM600Supported = False
+			self.m600Enabled = False
 			self.checkingM600 = False
 			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
 		if re.search("^X:.* Y:.* Z:.* E:.*", line):
@@ -189,7 +191,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				pip="https://github.com/luckyx182/Filament_sensor_simplified/archive/{target_version}.zip"
 			)
 		)
-
 
 # Starting with OctoPrint 1.4.0 OctoPrint will also support to run under Python 3 in addition to the deprecated
 # Python 2. New plugins should make sure to run under both versions for now. Uncomment one of the following
