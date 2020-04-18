@@ -75,6 +75,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self._logger.info("Pin not configured, won't work unless configured!")
 
 	def checkM600Enabled(self):
+		sleep(1)
 		self.checkingM600 = True
 		self._printer.commands("M603")
 
@@ -83,18 +84,22 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._printer.commands("M114")
 
 	def gcode_response_received(self, comm, line, *args, **kwargs):
-		if re.search("^ok", line) and self.checkingM600:
-			self._logger.debug("Printer supports M600")
-			self.m600Enabled = True
-			self.checkingM600 = False
-		elif self.checkingM600:
-			self._logger.debug("Printer doesn't support M600")
-			self.m600Enabled = False
-			self.checkingM600 = False
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
-		if re.search("^X:.* Y:.* Z:.* E:.*", line):
-			self._logger.debug("Received coordinates, processing...")
-			self.extract_xy_position(line)
+		if self.m600Enabled:
+			if re.search("^X:.* Y:.* Z:.* E:.*", line):
+				self._logger.debug("Received coordinates, processing...")
+				self.extract_xy_position(line)
+			if re.search("^ok", line) and self.checkingM600:
+				self._logger.debug("Printer supports M600")
+				self.m600Enabled = True
+				self.checkingM600 = False
+			elif re.search("^echo:Unknown command: \"M603\"", line) and self.checkingM600:
+				self._logger.debug("Printer doesn't support M600")
+				self.m600Enabled = False
+				self.checkingM600 = False
+				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
+			elif self.checkingM600:
+				self._logger.debug("M600 check unsuccessful, trying again")
+				self.checkM600Enabled()
 		return line
 
 	def extract_xy_position(self, arg):
@@ -122,38 +127,40 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def on_event(self, event, payload):
 		# Early abort in case of out ot filament when start printing, as we
 		# can't change with a cold nozzle
+		self._logger.info("Received event: %s" %(event))
 		if event is Events.CONNECTED:
 			self.checkM600Enabled()
 		if (event is Events.USER_LOGGED_IN or event is Events.PRINT_STARTED) and not self.sensor_enabled():
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="You may have forgotten to configure this plugin."))
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="Don' forget to configure this plugin."))
 		if event is Events.PRINT_STARTED and self.no_filament():
 			self._logger.info("Printing aborted: no filament detected!")
 			self._printer.cancel_print()
 			self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", msg="No filament detected! Print cancelled."))
-		# Enable sensor
-		if event in (
-				Events.PRINT_STARTED,
-				Events.PRINT_RESUMED
-		):
-			self._logger.info("%s: Enabling filament sensor." % (event))
-			if self.sensor_enabled():
-				self.print_head_parking = False
-				self.print_head_parked = False
+		if self.m600Enabled:
+			# Enable sensor
+			if event in (
+					Events.PRINT_STARTED,
+					Events.PRINT_RESUMED
+			):
+				self._logger.info("%s: Enabling filament sensor." % (event))
+				if self.sensor_enabled():
+					self.print_head_parking = False
+					self.print_head_parked = False
+					GPIO.remove_event_detect(self.pin)
+					GPIO.add_event_detect(
+						self.pin, GPIO.BOTH,
+						callback=self.sensor_callback,
+						bouncetime=1
+					)
+			# Disable sensor
+			elif event in (
+					Events.PRINT_DONE,
+					Events.PRINT_FAILED,
+					Events.PRINT_CANCELLED,
+					Events.ERROR
+			):
+				self._logger.info("%s: Disabling filament sensor." % (event))
 				GPIO.remove_event_detect(self.pin)
-				GPIO.add_event_detect(
-					self.pin, GPIO.BOTH,
-					callback=self.sensor_callback,
-					bouncetime=1
-				)
-		# Disable sensor
-		elif event in (
-				Events.PRINT_DONE,
-				Events.PRINT_FAILED,
-				Events.PRINT_CANCELLED,
-				Events.ERROR
-		):
-			self._logger.info("%s: Disabling filament sensor." % (event))
-			GPIO.remove_event_detect(self.pin)
 
 	def sensor_callback(self, _):
 		self.get_position_info()
