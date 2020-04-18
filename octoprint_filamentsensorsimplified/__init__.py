@@ -22,6 +22,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self.print_head_parking = False
 		self.print_head_parked = False
 		self.checkingM600 = False
+		self.m600Enabled = True
 
 	@property
 	def pin(self):
@@ -116,20 +117,20 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		return GPIO.input(self.pin) != self.switch
 
 	def on_event(self, event, payload):
-		# Early abort in case of out ot filament when start printing, as we
-		# can't change with a cold nozzle
 		self._logger.info("Received event: %s" %(event))
 		if event is Events.CONNECTED:
 			self.checkM600Enabled()
+		elif event is Events.DISCONNECTED:
+			self.m600Enabled = True
+		elif event is Events.PRINT_STARTED and self.no_filament():
+			self._logger.info("Printing aborted: no filament detected!")
+			self._printer.cancel_print()
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", msg="No filament detected! Print cancelled."))
 		if not self.sensor_enabled():
 			if event is Events.USER_LOGGED_IN:
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="Don' forget to configure this plugin."))
 			elif event is Events.PRINT_STARTED:
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="You may have forgotten to configure this plugin."))
-		if event is Events.PRINT_STARTED and self.no_filament():
-			self._logger.info("Printing aborted: no filament detected!")
-			self._printer.cancel_print()
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", msg="No filament detected! Print cancelled."))
 		if self.m600Enabled:
 			# Enable sensor
 			if event in (
