@@ -71,19 +71,25 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._printer.commands("M603")
 
 	def get_position_info(self):
+		self.getting_position = True
 		self._logger.debug("Sending M114 command")
 		self._printer.commands("M114")
 
 	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if self.m600Enabled:
-			if re.search("^X:.* Y:.* Z:.* E:.*", line):
+			if self.getting_position and re.search("^X:.* Y:.* Z:.*", line):
 				self._logger.debug("Received coordinates, processing...")
 				self.extract_xy_position(line)
-			if re.search("^ok", line) and self.checkingM600:
+				self.getting_position = False
+			elif self.getting_position:
+				self._logger.debug("Position check unsuccessful, trying again")
+				self.get_position_info()
+
+			if self.checkingM600 and re.search("^ok", line):
 				self._logger.debug("Printer supports M600")
 				self.m600Enabled = True
 				self.checkingM600 = False
-			elif re.search("^echo:Unknown command: \"M603\"", line) and self.checkingM600:
+			elif self.checkingM600 and re.search("^echo:Unknown command: \"M603\"", line) :
 				self._logger.debug("Printer doesn't support M600")
 				self.m600Enabled = False
 				self.checkingM600 = False
@@ -141,11 +147,20 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					self.print_head_parking = False
 					self.print_head_parked = False
 					GPIO.remove_event_detect(self.pin)
-					GPIO.add_event_detect(
-						self.pin, GPIO.BOTH,
-						callback=self.sensor_callback,
-						bouncetime=1
-					)
+					if self.switch is 0:
+						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+						GPIO.add_event_detect(
+							self.pin, GPIO.RISING,
+							callback=self.sensor_callback,
+							bouncetime=1
+						)
+					else:
+						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+						GPIO.add_event_detect(
+							self.pin, GPIO.FALLING,
+							callback=self.sensor_callback,
+							bouncetime=1
+						)
 			# Disable sensor
 			elif event in (
 					Events.PRINT_DONE,
@@ -158,7 +173,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def sensor_callback(self, _):
 		self.get_position_info()
-		sleep(1)
+		while self.getting_position:
+			sleep(0.5)
 
 		if self.no_filament() and not self.print_head_parked:
 			self._logger.info("Out of filament!")
