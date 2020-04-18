@@ -80,7 +80,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._printer.commands("M114")
 
 	def gcode_received(self, comm, line, *args, **kwargs):
-		if re.search("^ok") and self.checkingM600:
+		if re.search("^ok", line) and self.checkingM600:
 			self.isM600Supported = True
 			self.checkingM600 = False
 		elif self.checkingM600:
