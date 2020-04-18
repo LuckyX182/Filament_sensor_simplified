@@ -121,8 +121,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._logger.info("Received event: %s" %(event))
 		if event is Events.CONNECTED:
 			self.checkM600Enabled()
-		if (event is Events.USER_LOGGED_IN or event is Events.PRINT_STARTED) and not self.sensor_enabled():
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="Don' forget to configure this plugin."))
+		if not self.sensor_enabled():
+			if event is Events.USER_LOGGED_IN:
+				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="Don' forget to configure this plugin."))
+			elif event is Events.PRINT_STARTED:
+				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="You may have forgotten to configure this plugin."))
 		if event is Events.PRINT_STARTED and self.no_filament():
 			self._logger.info("Printing aborted: no filament detected!")
 			self._printer.cancel_print()
