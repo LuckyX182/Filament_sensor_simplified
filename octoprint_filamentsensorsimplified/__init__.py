@@ -31,14 +31,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def switch(self):
 		return int(self._settings.get(["switch"]))
 
-	@property
-	def m600Enabled(self):
-		return bool(self._settings.get(["m600Enabled"]))
-
-	@m600Enabled.setter
-	def m600Enabled(self, value):
-		self._m600Enabled = value
-
 	# AssetPlugin hook
 	def get_assets(self):
 		return dict(js=["js/filamentsensorsimplified.js"])
@@ -53,7 +45,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			pin=-1,  # Default is -1
 			switch=1,  # Normally closed
 			autoClose=True,
-			m600Enabled=True
 		)
 
 	def on_after_startup(self):

@@ -2,28 +2,6 @@ $(function() {
     function filamentsensorsimplifiedViewModel(parameters) {
         var self = this;
 
-		self.settingsViewModel = parameters[0];
-
-		self.autoClose = ko.observable();
-		self.msgType = ko.observable();
-		self.msgTypes = ko.observableArray([{
-						name : 'Notice',
-						value : 'notice'
-					}, {
-						name : 'Error',
-						value : 'error'
-					}, {
-						name : 'Info',
-						value : 'info'
-					}, {
-						name : 'Success',
-						value : 'success'
-					}, {
-						name : 'Disabled',
-						value : 'disabled'
-					}
-				]);
-
 		self.onDataUpdaterPluginMessage = function(plugin, data) {
             if (plugin !== "filamentsensorsimplified") {
 				console.log('Ignoring '+plugin);
@@ -37,20 +15,6 @@ $(function() {
                 hide: self.settingsViewModel.settings.plugins.filamentsensorsimplified.autoClose()
                 });
 
-		}
-
-		self.onBeforeBinding = function() {
-            self.msgType(self.settingsViewModel.settings.plugins.filamentsensorsimplified.msgType());
-            self.autoClose(self.settingsViewModel.settings.plugins.filamentsensorsimplified.autoClose());
-        }
-
-		self.onEventSettingsUpdated = function (payload) {
-            self.msgType = self.settingsViewModel.settings.plugins.filamentsensorsimplified.msgType();
-            self.autoClose = self.settingsViewModel.settings.plugins.filamentsensorsimplified.autoClose();
-        }
-
-		self.testPopUp = function(data) {
-			self.onDataUpdaterPluginMessage("filamentsensorsimplified", {'msg':'Filament Sensor Simplified pop up message example.','type':'popup'});
 		}
 
     }
