@@ -1,6 +1,7 @@
 $(function() {
     function filamentsensorsimplifiedViewModel(parameters) {
         var self = this;
+        self.settingsViewModel = parameters[0];
 
 		self.onDataUpdaterPluginMessage = function(plugin, data) {
             if (plugin !== "filamentsensorsimplified") {
