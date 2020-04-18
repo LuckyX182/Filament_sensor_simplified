@@ -13,7 +13,7 @@ $(function() {
                 title: 'Filament sensor simplified',
                 text: data.msg,
                 type: data.type,
-                hide: self.settingsViewModel.settings.plugins.filamentsensorsimplified.autoClose()
+                hide: true
                 });
 
 		}

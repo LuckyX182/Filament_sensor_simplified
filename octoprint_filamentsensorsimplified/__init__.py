@@ -44,8 +44,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def get_settings_defaults(self):
 		return dict(
 			pin=-1,  # Default is -1
-			switch=1,  # Normally closed
-			autoClose=True,
+			switch=1
 		)
 
 	def on_after_startup(self):
@@ -117,7 +116,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		return GPIO.input(self.pin) != self.switch
 
 	def on_event(self, event, payload):
-		self._logger.info("Received event: %s" %(event))
 		if event is Events.CONNECTED:
 			self.checkM600Enabled()
 		elif event is Events.DISCONNECTED:
