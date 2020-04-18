@@ -31,6 +31,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def switch(self):
 		return int(self._settings.get(["switch"]))
 
+	@property
+	def m600Enabled(self):
+		return bool(self._settings.get(["m600Enabled"]))
+
 	# AssetPlugin hook
 	def get_assets(self):
 		return dict(js=["js/filamentsensorsimplified.js"])
@@ -44,8 +48,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		return dict(
 			pin=-1,  # Default is -1
 			switch=1,  # Normally closed
-			mode=0,  # Board Mode
 			autoClose=True,
+			m600Enabled=True
 		)
 
 	def on_after_startup(self):
@@ -69,7 +73,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def checkM600Enabled(self):
 		self.checkingM600 = True
-		self._printer.commands("M114")
+		self._printer.commands("M603")
 
 	def get_position_info(self):
 		self._logger.debug("Sending M114 command")
@@ -79,6 +83,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if re.search("^ok") and self.checkingM600:
 			self.isM600Supported = True
 			self.checkingM600 = False
+		elif self.checkingM600:
+			self.isM600Supported = False
+			self.checkingM600 = False
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
 		if re.search("^X:.* Y:.* Z:.* E:.*", line):
 			self._logger.debug("Received coordinates, processing...")
 			self.extract_xy_position(line)
@@ -109,6 +117,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def on_event(self, event, payload):
 		# Early abort in case of out ot filament when start printing, as we
 		# can't change with a cold nozzle
+		if event is Events.CONNECTED:
+			self.checkM600Enabled()
 		if (event is Events.USER_LOGGED_IN or event is Events.PRINT_STARTED) and not self.sensor_enabled():
 			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="You may have forgotten to configure this plugin."))
 		if event is Events.PRINT_STARTED and self.no_filament():
