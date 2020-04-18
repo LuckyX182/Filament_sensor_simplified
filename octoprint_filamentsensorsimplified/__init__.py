@@ -21,7 +21,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		GPIO.setwarnings(False)  # Disable GPIO warnings
 		self.print_head_parking = False
 		self.print_head_parked = False
-		self.isM600Supported = False
+		self.isM600Supported = True
+		self.checkingM600 = False
 
 	@property
 	def pin(self):
@@ -79,11 +80,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._logger.debug("Sending M114 command")
 		self._printer.commands("M114")
 
-	def gcode_received(self, comm, line, *args, **kwargs):
+	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if re.search("^ok", line) and self.checkingM600:
+			self._logger.debug("Printer supports M600")
 			self.isM600Supported = True
 			self.checkingM600 = False
 		elif self.checkingM600:
+			self._logger.debug("Printer doesn't support M600")
 			self.isM600Supported = False
 			self.checkingM600 = False
 			self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
@@ -206,5 +209,5 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.gcode.received": __plugin_implementation__.gcode_received
+		"octoprint.comm.protocol.gcode.received": __plugin_implementation__.gcode_response_received
 	}
