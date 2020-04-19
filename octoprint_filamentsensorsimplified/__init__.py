@@ -23,6 +23,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self.print_head_parked = False
 		self.checkingM600 = False
 		self.m600Enabled = True
+		self.changing_filament = False
 
 	@property
 	def pin(self):
@@ -70,20 +71,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self.checkingM600 = True
 		self._printer.commands("M603")
 
-	def get_position_info(self):
-		self.getting_position = True
-		self._logger.debug("Sending M114 command")
-		self._printer.commands("M114")
-
 	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if self.m600Enabled:
-			if self.getting_position and re.search("^X:.* Y:.* Z:.*", line):
-				self._logger.debug("Received coordinates, processing...")
-				self.extract_xy_position(line)
-				self.getting_position = False
-			elif self.getting_position:
-				self._logger.debug("Position check unsuccessful, trying again")
-				self.get_position_info()
+			if self.changing_filament and re.search("^X:.* Y:.* Z:.*", line):
+				self.changing_filament = False
 
 			if self.checkingM600 and re.search("^ok", line):
 				self._logger.debug("Printer supports M600")
@@ -98,22 +89,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._logger.debug("M600 check unsuccessful, trying again")
 				self.checkM600Enabled()
 		return line
-
-	def extract_xy_position(self, arg):
-		initial_list = arg.split(" ")[:2]
-		xy_coordinates = []
-		for item in initial_list:
-			xy_coordinates.append(item.split(":")[1])
-		self._logger.debug("Parsed coordinates are: X%s Y%s", xy_coordinates[0], xy_coordinates[1])
-		self.set_head_parked(xy_coordinates)
-
-	def set_head_parked(self, xy_coordinates):
-		if xy_coordinates[0] == "0.00" and xy_coordinates[1] == "0.00":
-			self._logger.debug("Print head is parked")
-			self.print_head_parked = True
-		else:
-			self._logger.debug("Print head is not parked")
-			self.print_head_parked = False
 
 	def sensor_enabled(self):
 		return self.pin != -1
@@ -173,22 +148,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def sensor_callback(self, _):
 		self._logger.info("Sensor was triggered")
-		self.get_position_info()
-		while self.getting_position:
-			sleep(0.5)
-
-		if self.no_filament() and not self.print_head_parked:
+		self.changing_filament = True
+		if not self.changing_filament:
+			sleep(1)
 			self._logger.info("Out of filament!")
-			if self.print_head_parking:
-				self._logger.info("Waiting for print head to park")
-				return
 			self._logger.info("Sending out of filament GCODE")
 			self._printer.commands("M600 X0 Y0")
-			self.print_head_parking = True
-		elif self.print_head_parked:
-			self.print_head_parking = False
-			if not self.no_filament():
-				self._logger.info("Filament detected!")
+			self.changing_filament = True
 
 	def get_update_information(self):
 		# Define the configuration for your plugin to use with the Software Update
