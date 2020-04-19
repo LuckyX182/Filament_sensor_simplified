@@ -163,12 +163,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				GPIO.remove_event_detect(self.pin)
 
 	def sensor_callback(self, _):
+		sleep(1)
 		self._logger.info("Sensor was triggered")
 		if not self.changing_filament:
 			self.send_out_of_filament()
 
 	def send_out_of_filament(self):
-		sleep(1)
 		self._logger.info("Out of filament!")
 		self._logger.info("Sending out of filament GCODE")
 		self._printer.commands("M600 X0 Y0")
