@@ -13,7 +13,7 @@ $(function() {
                 title: 'Filament sensor simplified',
                 text: data.msg,
                 type: data.type,
-                hide: true
+                hide: data.autoClose
                 });
 
 		}

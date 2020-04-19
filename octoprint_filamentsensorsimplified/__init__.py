@@ -22,6 +22,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self.checkingM600 = False
 		self.m600Enabled = True
 		self.changing_filament = False
+		self.paused_for_user = False
 
 	@property
 	def pin(self):
@@ -71,10 +72,16 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if self.m600Enabled:
-			if self.changing_filament and re.search("^X:.* Y:.* Z:.*", line):
-				self._logger.debug("Received coordinates, processing...")
-				self.extract_xy_position(line)
-
+			if self.changing_filament:
+				if re.search("busy: paused for user", line):
+					if not self.paused_for_user:
+						self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="false", msg="Filament change: printer is waiting for user input."))
+						self.paused_for_user = True
+				if re.search("busy: processing", line):
+					if self.paused_for_user:
+						self.paused_for_user = False
+				if not re.search("^T:", line):
+					self.changing_filament = False
 			if self.checkingM600 and re.search("^ok", line):
 				self._logger.debug("Printer supports M600")
 				self.m600Enabled = True
@@ -83,7 +90,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._logger.debug("Printer doesn't support M600")
 				self.m600Enabled = False
 				self.checkingM600 = False
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
+				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="true", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
 			elif self.checkingM600:
 				self._logger.debug("M600 check unsuccessful, trying again")
 				self.checkM600Enabled()
@@ -120,13 +127,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 		if not self.sensor_enabled():
 			if event is Events.USER_LOGGED_IN:
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="Don' forget to configure this plugin."))
+				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="true", msg="Don' forget to configure this plugin."))
 			elif event is Events.PRINT_STARTED:
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", msg="You may have forgotten to configure this plugin."))
+				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="true", msg="You may have forgotten to configure this plugin."))
 		elif event is Events.PRINT_STARTED and self.no_filament():
 			self._logger.info("Printing aborted: no filament detected!")
 			self._printer.cancel_print()
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", msg="No filament detected! Print cancelled."))
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose="true", msg="No filament detected! Print cancelled."))
 		if self.m600Enabled:
 			# Enable sensor
 			if event in (
