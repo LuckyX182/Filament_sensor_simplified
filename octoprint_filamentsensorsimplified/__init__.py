@@ -19,8 +19,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if GPIO.VERSION < "0.6":  # Need at least 0.6 for edge detection
 			raise Exception("RPi.GPIO must be greater than 0.6")
 		GPIO.setwarnings(False)  # Disable GPIO warnings
-		self.print_head_parking = False
-		self.print_head_parked = False
 		self.checkingM600 = False
 		self.m600Enabled = True
 		self.changing_filament = False
@@ -74,7 +72,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if self.m600Enabled:
 			if self.changing_filament and re.search("^X:.* Y:.* Z:.*", line):
-				self.changing_filament = False
+				self._logger.debug("Received coordinates, processing...")
+				self.extract_xy_position(line)
 
 			if self.checkingM600 and re.search("^ok", line):
 				self._logger.debug("Printer supports M600")
@@ -89,6 +88,23 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._logger.debug("M600 check unsuccessful, trying again")
 				self.checkM600Enabled()
 		return line
+
+	def extract_xy_position(self, arg):
+		initial_list = arg.split(" ")[:2]
+		xy_coordinates = []
+		for item in initial_list:
+			xy_coordinates.append(item.split(":")[1])
+		self._logger.debug("Parsed coordinates are: X%s Y%s", xy_coordinates[0], xy_coordinates[1])
+		self.set_head_parked(xy_coordinates)
+
+	def set_head_parked(self, xy_coordinates):
+		if xy_coordinates[0] == "0.00" and xy_coordinates[1] == "0.00":
+			self._logger.debug("Print head is parked")
+		else:
+			self._logger.debug("Print head is not parked")
+			self.changing_filament = False
+			if self.no_filament():
+				self.send_out_of_filament()
 
 	def sensor_enabled(self):
 		return self.pin != -1
@@ -148,13 +164,15 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def sensor_callback(self, _):
 		self._logger.info("Sensor was triggered")
-		self.changing_filament = True
 		if not self.changing_filament:
-			sleep(1)
-			self._logger.info("Out of filament!")
-			self._logger.info("Sending out of filament GCODE")
-			self._printer.commands("M600 X0 Y0")
-			self.changing_filament = True
+			self.send_out_of_filament()
+
+	def send_out_of_filament(self):
+		sleep(1)
+		self._logger.info("Out of filament!")
+		self._logger.info("Sending out of filament GCODE")
+		self._printer.commands("M600 X0 Y0")
+		self.changing_filament = True
 
 	def get_update_information(self):
 		# Define the configuration for your plugin to use with the Software Update
