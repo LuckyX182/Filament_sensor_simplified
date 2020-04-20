@@ -72,6 +72,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if self.m600Enabled:
+
 			if self.changing_filament:
 				self._logger.info("changing fil. received gcode %s" % (line))
 				if re.search("busy: paused for user", line):
@@ -79,25 +80,27 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					if not self.paused_for_user:
 						self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="false", msg="Filament change: printer is waiting for user input."))
 						self.paused_for_user = True
-				if re.search("echo:busy: processing", line):
+				elif re.search("echo:busy: processing", line):
 					self._logger.info("received busy processing")
 					if self.paused_for_user:
 						self.paused_for_user = False
-				if not re.search("^T:", line) or not re.search("^X:.*", line) or not re.search("ok", line):
+				elif (not re.search("^[\s]*$", line) and not re.search("T:", line) and not re.search("^X:.*", line) and not re.search("ok", line) and not re.search("^Insert filament", line)):
 					self._logger.info("resetting change filament on %s" % (line))
 					self.changing_filament = False
-			if self.checkingM600 and re.search("^ok", line):
-				self._logger.debug("Printer supports M600")
-				self.m600Enabled = True
-				self.checkingM600 = False
-			elif self.checkingM600 and re.search("^echo:Unknown command: \"M603\"", line) :
-				self._logger.debug("Printer doesn't support M600")
-				self.m600Enabled = False
-				self.checkingM600 = False
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="true", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
-			elif self.checkingM600:
-				self._logger.debug("M600 check unsuccessful, trying again")
-				self.checkM600Enabled()
+
+			if self.checkingM600:
+				if re.search("^ok", line):
+					self._logger.debug("Printer supports M600")
+					self.m600Enabled = True
+					self.checkingM600 = False
+				elif re.search("^echo:Unknown command: \"M603\"", line):
+					self._logger.debug("Printer doesn't support M600")
+					self.m600Enabled = False
+					self.checkingM600 = False
+					self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="true", msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
+				else:
+					self._logger.debug("M600 check unsuccessful, trying again")
+					self.checkM600Enabled()
 		return line
 
 	def extract_xy_position(self, arg):
