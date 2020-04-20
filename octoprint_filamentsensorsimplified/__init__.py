@@ -79,11 +79,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					if not self.paused_for_user:
 						self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="false", msg="Filament change: printer is waiting for user input."))
 						self.paused_for_user = True
-				if re.search("busy: processing", line):
+				if re.search("echo:busy: processing", line):
 					self._logger.info("received busy processing")
 					if self.paused_for_user:
 						self.paused_for_user = False
-				if not re.search("^T:", line) or not re.search("^X:.*"):
+				if not re.search("^T:", line) or not re.search("^X:.*", line) or not re.search("ok", line):
+					self._logger.info("resetting change filament on %s" % (line))
 					self.changing_filament = False
 			if self.checkingM600 and re.search("^ok", line):
 				self._logger.debug("Printer supports M600")
