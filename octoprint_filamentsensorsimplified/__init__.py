@@ -73,11 +73,14 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if self.m600Enabled:
 			if self.changing_filament:
+				self._logger.info("changing fil. received gcode %s" % (line))
 				if re.search("busy: paused for user", line):
+					self._logger.info("received busy paused for user")
 					if not self.paused_for_user:
 						self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose="false", msg="Filament change: printer is waiting for user input."))
 						self.paused_for_user = True
 				if re.search("busy: processing", line):
+					self._logger.info("received busy processing")
 					if self.paused_for_user:
 						self.paused_for_user = False
 				if not re.search("^T:", line) or not re.search("^X:.*"):
