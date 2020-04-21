@@ -21,7 +21,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		GPIO.setwarnings(False)  # Disable GPIO warnings
 		self.checkingM600 = False
 		self.m600Enabled = True
-		self.changing_filament = False
+		self.changing_filament_initiated = False
+		self.changing_filament_started = False
 		self.paused_for_user = False
 
 	@property
@@ -70,11 +71,20 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self.checkingM600 = True
 		self._printer.commands("M603")
 
+	def sending_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
+		if self.changing_filament_initiated and self.m600Enabled:
+			if self.changing_filament_started:
+				self.changing_filament_initiated = False
+				self.changing_filament_started = False
+				if self.no_filament():
+					self.send_out_of_filament()
+			if cmd == "M600 X0 Y0":
+				self.changing_filament_started = True
+
 	def gcode_response_received(self, comm, line, *args, **kwargs):
 		if self.m600Enabled:
 
-			if self.changing_filament:
-				self._logger.info("changing fil. received gcode %s" % (line))
+			if self.changing_filament_started:
 				if re.search("busy: paused for user", line):
 					self._logger.info("received busy paused for user")
 					if not self.paused_for_user:
@@ -84,9 +94,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					self._logger.info("received busy processing")
 					if self.paused_for_user:
 						self.paused_for_user = False
-				elif (not re.search("^[\s]*$", line) and not re.search("T:", line) and not re.search("^X:.*", line) and not re.search("ok", line) and not re.search("^Insert filament", line)):
-					self._logger.info("resetting change filament on %s" % (line))
-					self.changing_filament = False
 
 			if self.checkingM600:
 				if re.search("^ok", line):
@@ -102,23 +109,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					self._logger.debug("M600 check unsuccessful, trying again")
 					self.checkM600Enabled()
 		return line
-
-	def extract_xy_position(self, arg):
-		initial_list = arg.split(" ")[:2]
-		xy_coordinates = []
-		for item in initial_list:
-			xy_coordinates.append(item.split(":")[1])
-		self._logger.debug("Parsed coordinates are: X%s Y%s", xy_coordinates[0], xy_coordinates[1])
-		self.set_head_parked(xy_coordinates)
-
-	def set_head_parked(self, xy_coordinates):
-		if xy_coordinates[0] == "0.00" and xy_coordinates[1] == "0.00":
-			self._logger.debug("Print head is parked")
-		else:
-			self._logger.debug("Print head is not parked")
-			self.changing_filament = False
-			if self.no_filament():
-				self.send_out_of_filament()
 
 	def sensor_enabled(self):
 		return self.pin != -1
@@ -179,14 +169,14 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def sensor_callback(self, _):
 		sleep(1)
 		self._logger.info("Sensor was triggered")
-		if not self.changing_filament:
+		if not self.changing_filament_initiated:
 			self.send_out_of_filament()
 
 	def send_out_of_filament(self):
 		self._logger.info("Out of filament!")
 		self._logger.info("Sending out of filament GCODE")
 		self._printer.commands("M600 X0 Y0")
-		self.changing_filament = True
+		self.changing_filament_initiated = True
 
 	def get_update_information(self):
 		# Define the configuration for your plugin to use with the Software Update
@@ -226,5 +216,6 @@ def __plugin_load__():
 	global __plugin_hooks__
 	__plugin_hooks__ = {
 		"octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
-		"octoprint.comm.protocol.gcode.received": __plugin_implementation__.gcode_response_received
+		"octoprint.comm.protocol.gcode.received": __plugin_implementation__.gcode_response_received,
+		"octoprint.comm.protocol.gcode.sending": __plugin_implementation__.sending_gcode
 	}
