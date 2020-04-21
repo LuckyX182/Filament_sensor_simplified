@@ -1,18 +1,38 @@
-<h4>{{ _('Filament Sensor Simplified') }}</h4>
-<form class="form-horizontal">
+<h3>{{ _('Filament Sensor Simplified') }}</h3>
+<form class="form-horizontal marginTop">
     <div class="control-group">
-        <label class="control-label">{{ _('Pin:') }}</label>
-        <div class="controls" data-toggle="tooltip" title="{{ _('Which Raspberry Pi GPIO pin your switch is attached to (-1 disables the plugin)') }}">
-            <input type="number" step="any" min="0" class="input-mini text-right" data-bind="value: settings.plugins.filamentsensorsimplified.pin">
+        <div class="marginBot">
+            <b>Which Raspberry Pi GPIO pin your sensor is attached to (-1 disables the plugin)</b>
+        </div>
+        <label class="control-label">{{ _('Board pin:') }}</label>
+        <div class="controls" data-toggle="tooltip">
+            <input type="number" step="any" min="0" class="input-mini text-right"
+                   data-bind="value: settings.plugins.filamentsensorsimplified.pin">
         </div>
     </div>
     <div class="control-group">
-        <label class="control-label">{{ _('Switch connected to:') }}</label>
-        <div class="controls" data-toggle="tooltip" title="{{ _('Specify how the switch is connected. One end of the switch must be wired to ground or 5V. Sensor is triggered when open.') }}">
+        <div class="marginBot">
+            <b>The other terminal of the sensor (switch) needs to be connected to ground or 3.3 V</b>
+        </div>
+        <label class="control-label">{{ _('Sensor is connected to:') }}</label>
+        <div class="controls" data-toggle="tooltip"
+             title="{{ _('Specify how the sensor (switch) is connected. One end of the sensor must be wired to ground or 3.3 V. Sensor is triggered when open.') }}">
             <select class="select-mini" data-bind="value: settings.plugins.filamentsensorsimplified.switch">
-                <option value=1>{{ _('5V') }}</option>
                 <option value=0>{{ _('Ground') }}</option>
+                <option value=1>{{ _('3.3V') }}</option>
             </select>
+        </div>
+        <div class="alert-info wy-alert-warning marginTop">
+            <span class="icon-info-sign"/>
+            <span class="octoFontFamily iconIndent">Sensor is triggered when open.</span>
+        </div>
+        <div class="alert-danger">
+            <span class="icon-warning-sign"/>
+            <span class="octoFontFamily iconIndent">Warning! Never connect the sensor to 5V! 5V could destroy GPIO of your Raspberry Pi.</span>
+        </div>
+        <div style="font-size: 11px">
+            For more information click <a
+                href="https://github.com/LuckyX182/Filament_sensor_simplified">here</a>
         </div>
     </div>
 </form>

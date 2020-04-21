@@ -35,7 +35,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# AssetPlugin hook
 	def get_assets(self):
-		return dict(js=["js/filamentsensorsimplified.js"])
+		return dict(js=["js/filamentsensorsimplified.js"], css=["css/filamentsensorsimplified.css"])
 
 	# Template hooks
 	def get_template_configs(self):
