@@ -5,7 +5,7 @@ import octoprint.plugin
 import re
 from octoprint.events import Events
 from time import sleep
-
+import RPi.GPIO as GPIO
 
 class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                        octoprint.plugin.EventHandlerPlugin,
@@ -209,7 +209,7 @@ __plugin_version__ = "0.1.0"
 
 def __plugin_check__():
     try:
-        import RPi.GPIO as GPIO
+        import RPi.GPIO
     except ImportError:
         return False
 
