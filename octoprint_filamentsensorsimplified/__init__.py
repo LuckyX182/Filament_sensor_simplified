@@ -61,7 +61,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self._logger.info("Using Board Mode")
             GPIO.setmode(GPIO.BOARD)
             self._logger.info("Filament Sensor active on GPIO Pin [%s]" % self.pin)
-            GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            if self.switch is 0:
+                GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            else:
+                GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         else:
             self._logger.info("Pin not configured, won't work unless configured!")
 
@@ -85,12 +88,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
             if self.changing_filament_started:
                 if re.search("busy: paused for user", line):
-                    self._logger.info("received busy paused for user")
+                    self._logger.debug("received busy paused for user")
                     if not self.paused_for_user:
                         self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Filament change: printer is waiting for user input."))
                         self.paused_for_user = True
                 elif re.search("echo:busy: processing", line):
-                    self._logger.info("received busy processing")
+                    self._logger.debug("received busy processing")
                     if self.paused_for_user:
                         self.paused_for_user = False
 
@@ -142,14 +145,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     self.print_head_parked = False
                     GPIO.remove_event_detect(self.pin)
                     if self.switch is 0:
-                        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
                         GPIO.add_event_detect(
                             self.pin, GPIO.RISING,
                             callback=self.sensor_callback,
                             bouncetime=1
                         )
                     else:
-                        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
                         GPIO.add_event_detect(
                             self.pin, GPIO.FALLING,
                             callback=self.sensor_callback,
@@ -172,7 +173,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self.send_out_of_filament()
 
     def send_out_of_filament(self):
-        self._logger.info("Out of filament!")
         self._logger.info("Sending out of filament GCODE")
         self._printer.commands("M600 X0 Y0")
         self.changing_filament_initiated = True
