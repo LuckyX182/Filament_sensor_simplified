@@ -7,6 +7,7 @@ from octoprint.events import Events
 from time import sleep
 import RPi.GPIO as GPIO
 
+
 class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                        octoprint.plugin.EventHandlerPlugin,
                                        octoprint.plugin.TemplatePlugin,
@@ -14,9 +15,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                        octoprint.plugin.AssetPlugin):
 
     def initialize(self):
-        self._logger.info("Running RPi.GPIO version '{0}'".format(GPIO.VERSION))
-        if GPIO.VERSION < "0.6":  # Need at least 0.6 for edge detection
-            raise Exception("RPi.GPIO must be greater than 0.6")
         GPIO.setwarnings(False)  # Disable GPIO warnings
         self.checkingM600 = False
         self.m600Enabled = True
@@ -209,10 +207,11 @@ __plugin_version__ = "0.1.0"
 
 def __plugin_check__():
     try:
-        import RPi.GPIO
+        import RPi.GPIO as GPIO
+        if GPIO.VERSION < "0.6":  # Need at least 0.6 for edge detection
+            return False
     except ImportError:
         return False
-
     return True
 
 def __plugin_load__():
