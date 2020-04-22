@@ -45,7 +45,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def get_settings_defaults(self):
 		return dict(
 			pin=-1,  # Default is -1
-			switch=1
+			switch=0
 		)
 
 	def on_after_startup(self):
