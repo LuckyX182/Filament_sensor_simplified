@@ -35,3 +35,10 @@ You might experience the same problem as I experienced - the sensor was randomly
 To solve this connect a shielded wire to your sensor and ground the shielding, ideally on both ends.
 
 If you are unsure about your sensor being triggered, check [OctoPrint logs](https://community.octoprint.org/t/where-can-i-find-octoprints-and-octopis-log-files/299)
+
+## Support me
+
+This plugin was developed in my spare time.
+If you find it useful and like it, you can support me by clicking the button below :)
+
+[![More coffee, more code](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=5L758LYSUGHW4&source=url)
