@@ -42,3 +42,17 @@ This plugin was developed in my spare time.
 If you find it useful and like it, you can support me by clicking the button below :)
 
 [![More coffee, more code](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=5L758LYSUGHW4&source=url)
+
+## Screenshots
+
+Plugin settings:
+![plugin_settings](screenshots/settings.png "Plugin settings")
+
+No configuration pop-up:
+![no_config_pop-up](screenshots/no_conf_popup.png "No configuration pop-up")
+
+Pop-up for M600 disabled:
+![M600_not_enabled](screenshots/M600_disabled.png "M600 not enabled pop-up")
+
+No filament when starting print pop-up:
+![no_filament_popup](screenshots/no_filament.png "No filament pop-up")
