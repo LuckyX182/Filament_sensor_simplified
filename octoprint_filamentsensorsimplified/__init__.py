@@ -171,6 +171,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             ):
                 self._logger.info("%s: Disabling filament sensor." % (event))
                 GPIO.remove_event_detect(self.pin)
+                self.changing_filament_initiated = False
+                self.changing_filament_started = False
+                self.paused_for_user = False
 
     def sensor_callback(self, _):
         sleep(1)
