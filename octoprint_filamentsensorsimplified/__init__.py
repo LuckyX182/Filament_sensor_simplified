@@ -123,9 +123,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self.m600Enabled = True
 
         if event is Events.USER_LOGGED_IN:
-            if self.changing_filament_initiated:
-                self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Printer run out of filament!"))
-            elif self.changing_filament_started and self.paused_for_user:
+            if self.changing_filament_initiated and not self.changing_filament_started:
+                self.show_printer_runout_popup()
+            if self.changing_filament_started and not self.paused_for_user:
+                self.show_printer_runout_popup()
+            if self.changing_filament_started and self.paused_for_user:
                 self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Printer run out of filament! It's waiting for user input"))
 
         if not self.sensor_enabled():
@@ -177,10 +179,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self.send_out_of_filament()
 
     def send_out_of_filament(self):
-        self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Printer run out of filament!"))
+        self.show_printer_runout_popup()
         self._logger.info("Sending out of filament GCODE")
         self._printer.commands("M600 X0 Y0")
         self.changing_filament_initiated = True
+
+    def show_printer_runout_popup(self):
+        self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Printer run out of filament!"))
 
     def get_update_information(self):
         # Define the configuration for your plugin to use with the Software Update

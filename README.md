@@ -55,4 +55,10 @@ Pop-up for M600 disabled:
 ![M600_not_enabled](screenshots/M600_disabled.png "M600 not enabled pop-up")
 
 No filament when starting print pop-up:
-![no_filament_popup](screenshots/no_filament.png "No filament pop-up")
+![start_no_filament_popup](screenshots/no_filament.png "Start with no filament pop-up")
+
+Filament runout pop-up:
+![no_filament_popup](screenshots/filament_runout.png "No filament pop-up")
+
+Waiting for user input pop-up:
+![user_input_popup](screenshots/waiting_for_user_input.png "User input required pop-up")
