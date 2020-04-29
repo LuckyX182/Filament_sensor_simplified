@@ -14,6 +14,8 @@ Let's check some features:
 * user-friendly and easy to configure
 * runs on OctoPrint 1.3.0 and higher
 
+**NOTE: this plugin won't work if you use OctoPrint only to start printing from SD card**
+
 ## Setup
 
 Install via the bundled [Plugin Manager](https://docs.octoprint.org/en/master/bundledplugins/pluginmanager.html)
