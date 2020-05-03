@@ -6,12 +6,13 @@ import re
 from octoprint.events import Events
 from time import sleep
 import RPi.GPIO as GPIO
-
+import flask
 
 class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                        octoprint.plugin.EventHandlerPlugin,
                                        octoprint.plugin.TemplatePlugin,
                                        octoprint.plugin.SettingsPlugin,
+                                       octoprint.plugin.SimpleApiPlugin,
                                        octoprint.plugin.AssetPlugin):
 
     def initialize(self):
@@ -45,6 +46,15 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             switch=0
         )
 
+    # simpleApiPlugin
+    def get_api_commands(self):
+        return dict(testSensor=["pin", "power"])
+
+    def on_api_command(self, command, data):
+        pin_value = GPIO.input(data.get("pin"))
+        triggered_bool = pin_value is int(data.get("power"))
+        return flask.jsonify(triggered=triggered_bool)
+
     def on_after_startup(self):
         self._logger.info("Filament Sensor Simplified started")
         self._setup_sensor()
@@ -55,8 +65,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
     def _setup_sensor(self):
         if self.sensor_enabled():
-            self._logger.info("Setting up sensor.")
-            self._logger.info("Using Board Mode")
+            self._logger.info("Setting up sensor using board mode.")
             GPIO.setmode(GPIO.BOARD)
             self._logger.info("Filament Sensor active on GPIO Pin [%s]" % self.pin)
             if self.switch is 0:
