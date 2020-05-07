@@ -51,7 +51,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         return dict(testSensor=["pin", "power"])
 
     def on_api_command(self, command, data):
-        pin_value = GPIO.input(data.get("pin"))
+        pin_value = GPIO.input(int(data.get("pin")))
         triggered_bool = pin_value is int(data.get("power"))
         return flask.jsonify(triggered=triggered_bool)
 
