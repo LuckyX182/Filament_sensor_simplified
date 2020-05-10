@@ -19,7 +19,7 @@ $(function () {
 
         }
 
-        testSensor = function () {
+        self.testSensor = function () {
             $.ajax({
                     url: "/api/plugin/filamentsensorsimplified",
                     type: "post",
@@ -42,6 +42,10 @@ $(function () {
                     }
                 }
             );
+        }
+
+        self.onSettingsShown = function () {
+            self.testSensorResult("");
         }
     }
 
