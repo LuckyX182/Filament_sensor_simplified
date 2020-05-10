@@ -31,6 +31,16 @@ $(function () {
                         "pin": $("#pinInput").val(),
                         "power": $("#powerInput").val()
                     }),
+                    statusCode: {
+                        500: function () {
+                            $("#sensor-test-result-text").css("color", "red");
+                            self.testSensorResult("OctoPrint experienced issue. Check octoprint.log for further info");
+                        }
+                    },
+                    error: function () {
+                        $("#sensor-test-result-text").css("color", "red");
+                        self.testSensorResult("There was an error :(");
+                    },
                     success: function (result) {
                         if (result.triggered === true) {
                             $("#sensor-test-result-text").css("color", "green");
