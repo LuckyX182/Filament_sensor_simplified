@@ -51,9 +51,18 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         return dict(testSensor=["pin", "power"])
 
     def on_api_command(self, command, data):
-        pin_value = GPIO.input(int(data.get("pin")))
-        triggered_bool = pin_value is int(data.get("power"))
-        return flask.jsonify(triggered=triggered_bool)
+        try:
+            selected_power = int(data.get("power"))
+            selected_pin = int(data.get("pin"))
+            if selected_power is 0:
+                GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            else:
+                GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+            pin_value = GPIO.input(selected_pin)
+            triggered_bool = pin_value is selected_power
+            return flask.jsonify(triggered=triggered_bool)
+        except ValueError:
+            return "", 501
 
     def on_after_startup(self):
         self._logger.info("Filament Sensor Simplified started")

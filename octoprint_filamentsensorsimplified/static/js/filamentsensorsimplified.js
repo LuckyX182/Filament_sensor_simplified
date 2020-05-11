@@ -35,6 +35,10 @@ $(function () {
                         500: function () {
                             $("#sensor-test-result-text").css("color", "red");
                             self.testSensorResult("OctoPrint experienced issue. Check octoprint.log for further info");
+                        },
+                        501: function () {
+                            $("#sensor-test-result-text").css("color", "red");
+                            self.testSensorResult("That is power or ground pin, choose other pin");
                         }
                     },
                     error: function () {
