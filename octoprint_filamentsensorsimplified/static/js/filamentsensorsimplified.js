@@ -38,7 +38,7 @@ $(function () {
                         },
                         555: function () {
                             $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("This pin is used for something else, choose other pin");
+                            self.testSensorResult("This pin is currently used by others, choose other pin");
                         },
                         556: function () {
                             $("#sensor-test-result-text").css("color", "red");
@@ -55,7 +55,7 @@ $(function () {
                             self.testSensorResult("OK! Sensor detected filament.");
                         } else {
                             $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("Fail! Sensor triggered (open).")
+                            self.testSensorResult("Fail! Sensor open (triggered).")
                         }
                     }
                 }
