@@ -16,7 +16,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                        octoprint.plugin.AssetPlugin):
 
     def initialize(self):
-        GPIO.setwarnings(False)  # Disable GPIO warnings
+        GPIO.setwarnings(True)
         self.checkingM600 = False
         self.m600Enabled = True
         self.changing_filament_initiated = False
@@ -54,15 +54,26 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         try:
             selected_power = int(data.get("power"))
             selected_pin = int(data.get("pin"))
+            # first check pins not in use already
+            usage = GPIO.gpio_function(selected_pin)
+            self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
+            # 1 = input
+            if usage is not 1:
+                # 555 is not http specific so I chose it
+                return "", 555
+            # before read don't let the pin float
             if selected_power is 0:
                 GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
             else:
                 GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             pin_value = GPIO.input(selected_pin)
+            # reset input to pull down after read
+            GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
             triggered_bool = pin_value is selected_power
             return flask.jsonify(triggered=triggered_bool)
         except ValueError:
-            return "", 501
+            # ValueError occurs when reading from power or ground pins
+            return "", 556
 
     def on_after_startup(self):
         self._logger.info("Filament Sensor Simplified started")
