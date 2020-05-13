@@ -94,7 +94,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                         self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
                                                                                         msg="Settings not saved, you are trying to save pin which is already used by others"))
                         return
+                    GPIO.setup(pin_to_save, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
                     GPIO.input(pin_to_save)
+                    GPIO.cleanup(pin_to_save)
                 except ValueError:
                     self._logger.info("You are trying to save pin %s which is ground/power pin or out of range" % (pin_to_save))
                     self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True, msg="Settings not saved, you are trying to save pin which is ground/power pin or out of range"))
