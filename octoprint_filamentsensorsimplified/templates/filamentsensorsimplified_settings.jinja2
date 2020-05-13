@@ -1,5 +1,5 @@
 <h3>{{ _('Filament Sensor Simplified') }}</h3>
-<form class="form-horizontal marginTop">
+<form id="filamentsensorsimplified_settings" class="form-horizontal marginTop">
     <div class="control-group">
         <div class="marginBot">
             <b>Which Raspberry Pi pin your sensor output is attached to (-1 disables the plugin)</b>
@@ -7,7 +7,7 @@
         <label class="control-label">{{ _('Board pin number:') }}</label>
         <div class="controls" data-toggle="tooltip">
             <input type="number" step="1" min="-1" max="40" class="input-mini text-right"
-                   data-bind="value: settings.plugins.filamentsensorsimplified.pin">
+                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin">
         </div>
     </div>
     <div class="control-group">
@@ -17,17 +17,29 @@
         <label class="control-label">{{ _('Sensor is connected to:') }}</label>
         <div class="controls" data-toggle="tooltip"
              title="{{ _('Specify how the sensor (switch) is connected. One end of the sensor must be wired to ground or 3.3 V. Sensor is triggered when open.') }}">
-            <select class="select-mini" data-bind="value: settings.plugins.filamentsensorsimplified.switch">
+            <select id="powerInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.switch">
                 <option value=0>{{ _('Ground') }}</option>
                 <option value=1>{{ _('3.3V') }}</option>
             </select>
         </div>
+        <div>
+            <table style="margin-left: 180px; margin-top: 20px">
+                <tr>
+                    <td>
+                        <input type="button" class="btn" data-bind="click: testSensor" value="Test sensor">
+                    </td>
+                    <td style="padding-left: 10px">
+                        <p id="sensor-test-result-text" data-bind="text: testSensorResult" style="display: inline;"></p>
+                    </td>
+                </tr>
+            </table>
+        </div>
         <div class="alert-info wy-alert-warning marginTop">
-            <span class="icon-info-sign"/>
+            <span class="icon-info-sign"></span>
             <span class="octoFontFamily iconIndent">Sensor is triggered when open.</span>
         </div>
         <div class="alert-danger">
-            <span class="icon-warning-sign"/>
+            <span class="icon-warning-sign"></span>
             <span class="octoFontFamily iconIndent">Warning! Never connect the sensor to 5V! 5V could destroy GPIO of your Raspberry Pi.</span>
         </div>
         <div style="font-size: 11px">

@@ -6,16 +6,17 @@ import re
 from octoprint.events import Events
 from time import sleep
 import RPi.GPIO as GPIO
-
+import flask
 
 class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                        octoprint.plugin.EventHandlerPlugin,
                                        octoprint.plugin.TemplatePlugin,
                                        octoprint.plugin.SettingsPlugin,
+                                       octoprint.plugin.SimpleApiPlugin,
                                        octoprint.plugin.AssetPlugin):
 
     def initialize(self):
-        GPIO.setwarnings(False)  # Disable GPIO warnings
+        GPIO.setwarnings(True)
         self.checkingM600 = False
         self.m600Enabled = True
         self.changing_filament_initiated = False
@@ -36,7 +37,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
     # Template hooks
     def get_template_configs(self):
-        return [dict(type="settings", custom_bindings=False)]
+        return [dict(type="settings", custom_bindings=True)]
 
     # Settings hook
     def get_settings_defaults(self):
@@ -45,18 +46,67 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             switch=0
         )
 
+    # simpleApiPlugin
+    def get_api_commands(self):
+        return dict(testSensor=["pin", "power"])
+
+    def on_api_command(self, command, data):
+        try:
+            selected_power = int(data.get("power"))
+            selected_pin = int(data.get("pin"))
+            # first check pins not in use already
+            usage = GPIO.gpio_function(selected_pin)
+            self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
+            # 1 = input
+            if usage is not 1:
+                # 555 is not http specific so I chose it
+                return "", 555
+            # before read don't let the pin float
+            if selected_power is 0:
+                GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            else:
+                GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+            pin_value = GPIO.input(selected_pin)
+            # reset input to pull down after read
+            GPIO.cleanup(selected_pin)
+            triggered_bool = pin_value is selected_power
+            return flask.jsonify(triggered=triggered_bool)
+        except ValueError:
+            # ValueError occurs when reading from power or ground pins
+            return "", 556
+
     def on_after_startup(self):
         self._logger.info("Filament Sensor Simplified started")
         self._setup_sensor()
 
     def on_settings_save(self, data):
+        if data.get("pin") is not None:
+            pin_to_save = int(data.get("pin"))
+
+            # check if pin is not power/ground pin or out of range but allow -1
+            if pin_to_save is not -1:
+                try:
+                    # before saving check if pin not used by others
+                    usage = GPIO.gpio_function(pin_to_save)
+                    self._logger.debug("usage on pin %s is %s" % (pin_to_save, usage))
+                    if usage is not 1:
+                        self._logger.info("You are trying to save pin %s which is already used by others" % (pin_to_save))
+                        self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
+                                                                                        msg="Settings not saved, you are trying to save pin which is already used by others"))
+                        return
+                    GPIO.setup(pin_to_save, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+                    GPIO.input(pin_to_save)
+                    GPIO.cleanup(pin_to_save)
+                except ValueError:
+                    self._logger.info("You are trying to save pin %s which is ground/power pin or out of range" % (pin_to_save))
+                    self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True, msg="Settings not saved, you are trying to save pin which is ground/power pin or out of range"))
+                    return
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
         self._setup_sensor()
 
     def _setup_sensor(self):
         if self.sensor_enabled():
-            self._logger.info("Setting up sensor.")
-            self._logger.info("Using Board Mode")
+            self._logger.info("Setting up sensor using board mode.")
             GPIO.setmode(GPIO.BOARD)
             self._logger.info("Filament Sensor active on GPIO Pin [%s]" % self.pin)
             if self.switch is 0:
