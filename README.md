@@ -6,12 +6,14 @@ If triggered (switch open) it issues **M600 X0 Y0** command to printer.
 Let's check some features:
 * pop-up notification when printer runs out of filament
 * very handy pop-up when printer requires user input while changing filament
+* test button so you know if your sensor really works or not
 * filament check at the start of the print - if no filament present it won't start printing, again pop-up will appear
 * filament check at the end of filament change - just to be sure you won't start printing with no filament
 * check if printer supports M600 when printer connected - if not user will be notified through pop-up
 * info pop-up when plugin hasn't been configured
 * filament runouts can be repeatable which didn't work with other plugins I tried
 * user-friendly and easy to configure
+* pin validation so you don't accidentally save wrong pin number
 * runs on OctoPrint 1.3.0 and higher
 
 **NOTE: this plugin won't work if you use OctoPrint only to start printing from SD card**
@@ -30,6 +32,7 @@ Configuration couldn't be simpler, all you need is to configure listening board 
 Default pin is -1 (not configured) and ground (as it is safer, read below).
 
 **WARNING! Never connect the switch input to 5V as it could fry the GPIO section of your Raspberry!**
+**WARNING! When using test button on input pin used by other application it will reset internal pull up/down resistor**
 
 #### Advice
 
