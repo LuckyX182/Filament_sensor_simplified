@@ -54,6 +54,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         try:
             selected_power = int(data.get("power"))
             selected_pin = int(data.get("pin"))
+            GPIO.setmode(GPIO.BOARD)
             # first check pins not in use already
             usage = GPIO.gpio_function(selected_pin)
             self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
