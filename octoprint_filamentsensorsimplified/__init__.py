@@ -173,7 +173,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         elif event is Events.DISCONNECTED:
             self.m600Enabled = True
 
-        if event is Events.USER_LOGGED_IN:
+        if event is Events.CLIENT_OPENED:
             if self.changing_filament_initiated and not self.changing_filament_started:
                 self.show_printer_runout_popup()
             if self.changing_filament_started and not self.paused_for_user:
@@ -182,7 +182,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                 self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Printer ran out of filament! It's waiting for user input"))
 
         if not self.sensor_enabled():
-            if event is Events.USER_LOGGED_IN:
+            if event is Events.CLIENT_OPENED:
                 self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True, msg="Don't forget to configure this plugin."))
             elif event is Events.PRINT_STARTED:
                 self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True, msg="You may have forgotten to configure this plugin."))
