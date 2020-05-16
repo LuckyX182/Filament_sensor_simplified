@@ -166,6 +166,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         return self.pin != -1
 
     def no_filament(self):
+        GPIO.setmode(GPIO.BOARD)
         return GPIO.input(self.pin) != self.switch
 
     def on_event(self, event, payload):
