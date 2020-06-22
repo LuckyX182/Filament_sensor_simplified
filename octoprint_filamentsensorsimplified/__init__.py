@@ -130,7 +130,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     self.changing_filament_started = False
                     if self.no_filament():
                         self.send_out_of_filament()
-            if cmd == "M600 X0 Y0":
+            if cmd == "M600":
                 self.changing_filament_started = True
 
     def gcode_response_received(self, comm, line, *args, **kwargs):
@@ -236,7 +236,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
     def send_out_of_filament(self):
         self.show_printer_runout_popup()
         self._logger.info("Sending out of filament GCODE")
-        self._printer.commands("M600 X0 Y0")
+        self._printer.commands("M600")
         self.changing_filament_initiated = True
 
     def show_printer_runout_popup(self):
