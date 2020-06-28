@@ -205,13 +205,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     if self.switch is 0:
                         GPIO.add_event_detect(
                             self.pin, GPIO.RISING,
-                            callback=self.sensor_callback,
+                            callback=self.sensor_callback_high,
                             bouncetime=5000
                         )
                     else:
                         GPIO.add_event_detect(
                             self.pin, GPIO.FALLING,
-                            callback=self.sensor_callback,
+                            callback=self.sensor_callback_low,
                             bouncetime=5000
                         )
             # Disable sensor
@@ -227,9 +227,23 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                 self.changing_filament_started = False
                 self.paused_for_user = False
 
-    def sensor_callback(self, _):
+    def sensor_callback_high(self, _):
         sleep(1)
-        self._logger.info("Sensor was triggered")
+        self._logger.info("Sensor was triggered high")
+        sleep(60)
+        if GPIO.input(self.pin) != GPIO.HIGH:
+            self._logger.info("Sensor was false positive high")
+            return
+        if not self.changing_filament_initiated:
+            self.send_out_of_filament()
+
+    def sensor_callback_low(self, _):
+        sleep(1)
+        self._logger.info("Sensor was triggered low")
+        sleep(60)
+        if GPIO.input(self.pin) != GPIO.LOW:
+            self._logger.info("Sensor was false positive low")
+            return
         if not self.changing_filament_initiated:
             self.send_out_of_filament()
 
