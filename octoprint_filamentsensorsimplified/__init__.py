@@ -206,13 +206,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                         GPIO.add_event_detect(
                             self.pin, GPIO.RISING,
                             callback=self.sensor_callback,
-                            bouncetime=500
+                            bouncetime=5000
                         )
                     else:
                         GPIO.add_event_detect(
                             self.pin, GPIO.FALLING,
                             callback=self.sensor_callback,
-                            bouncetime=500
+                            bouncetime=5000
                         )
             # Disable sensor
             elif event in (
