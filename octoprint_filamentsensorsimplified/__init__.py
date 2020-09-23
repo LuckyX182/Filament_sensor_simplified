@@ -30,7 +30,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
     @property
     def switch(self):
         return int(self._settings.get(["switch"]))
-        
+
     # AssetPlugin hook
     def get_assets(self):
         return dict(js=["js/filamentsensorsimplified.js"], css=["css/filamentsensorsimplified.css"])
@@ -134,32 +134,30 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                 self.changing_filament_started = True
 
     def gcode_response_received(self, comm, line, *args, **kwargs):
-        if self.m600Enabled:
+        if self.changing_filament_started:
+            if re.search("busy: paused for user", line):
+                self._logger.debug("received busy paused for user")
+                if not self.paused_for_user:
+                    self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Filament change: printer is waiting for user input."))
+                    self.paused_for_user = True
+            elif re.search("echo:busy: processing", line):
+                self._logger.debug("received busy processing")
+                if self.paused_for_user:
+                    self.paused_for_user = False
 
-            if self.changing_filament_started:
-                if re.search("busy: paused for user", line):
-                    self._logger.debug("received busy paused for user")
-                    if not self.paused_for_user:
-                        self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Filament change: printer is waiting for user input."))
-                        self.paused_for_user = True
-                elif re.search("echo:busy: processing", line):
-                    self._logger.debug("received busy processing")
-                    if self.paused_for_user:
-                        self.paused_for_user = False
-
-            if self.checkingM600:
-                if re.search("^ok", line):
-                    self._logger.debug("Printer supports M600")
-                    self.m600Enabled = True
-                    self.checkingM600 = False
-                elif re.search("^echo:Unknown command: \"M603\"", line):
-                    self._logger.debug("Printer doesn't support M600")
-                    self.m600Enabled = False
-                    self.checkingM600 = False
-                    self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True, msg="M600 gcode command is not enabled on this printer! Using M25 instead."))
-                else:
-                    self._logger.debug("M600 check unsuccessful, trying again")
-                    self.checkM600Enabled()
+        if self.checkingM600:
+            if re.search("^ok", line):
+                self._logger.debug("Printer supports M600")
+                self.m600Enabled = True
+                self.checkingM600 = False
+            elif re.search("^echo:Unknown command: \"M603\"", line):
+                self._logger.debug("Printer doesn't support M600")
+                self.m600Enabled = False
+                self.checkingM600 = False
+                self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True, msg="M600 gcode command is not enabled on this printer! Using M25 instead."))
+            else:
+                self._logger.debug("M600 check unsuccessful, trying again")
+                self.checkM600Enabled()
         return line
 
     def sensor_enabled(self):
@@ -241,6 +239,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self.changing_filament_initiated = True
         else:
             self._printer.commands("M25")
+            self.changing_filament_initiated = True
 
     def show_printer_runout_popup(self):
         self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False, msg="Printer ran out of filament!"))
