@@ -9,6 +9,14 @@
             <input id="pinInput" type="number" step="1" min="-1" max="40" class="input-mini text-right"
                    data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin">
         </div>
+		<div class="marginBot">
+            <b>How many signal verifications are needed to trigger filament runout (each verification takes 0.05 seconds)</b>
+        </div>
+		<label class="control-label">{{ _('Verifications:') }}</label>
+		<div class="controls" data-toggle="tooltip">
+            <input id="verifications" type="number" step="1" min="1" max="40" class="input-mini text-right"
+                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.verifications">
+        </div>
     </div>
     <div class="control-group">
         <div class="marginBot">

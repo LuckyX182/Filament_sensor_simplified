@@ -31,6 +31,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
     def switch(self):
         return int(self._settings.get(["switch"]))
 
+    @property
+    def verifications(self):
+        return int(self._settings.get(["verifications"]))
+
     # AssetPlugin hook
     def get_assets(self):
         return dict(js=["js/filamentsensorsimplified.js"], css=["css/filamentsensorsimplified.css"])
@@ -43,7 +47,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
     def get_settings_defaults(self):
         return dict(
             pin=-1,  # Default is -1
-            switch=0
+            switch=0,
+            verifications=5 # Default is 5
         )
 
     # simpleApiPlugin
@@ -130,7 +135,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     self.changing_filament_started = False
                     if self.no_filament():
                         self.send_out_of_filament()
-            if cmd == "M600 X0 Y0":
+            if cmd == "M600 X0 Y0" or cmd == "M25":
                 self.changing_filament_started = True
 
     def gcode_response_received(self, comm, line, *args, **kwargs):
@@ -228,10 +233,18 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                 self.paused_for_user = False
 
     def sensor_callback(self, _):
-        sleep(1)
-        self._logger.info("Sensor was triggered")
-        if not self.changing_filament_initiated:
-            self.send_out_of_filament()
+        counter = 0
+        trigger = True
+        while counter < self.verifications:
+            sleep(0.05)
+            counter = counter + 1
+            if GPIO.input(self.pin) == 0:
+                trigger = False
+                
+        if trigger:
+            self._logger.info("Sensor was triggered")
+            if not self.changing_filament_initiated:
+                self.send_out_of_filament()
 
     def send_out_of_filament(self):
         self.show_printer_runout_popup()
