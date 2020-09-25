@@ -10,6 +10,18 @@
                    data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin">
         </div>
     </div>
+
+    <div class="control-group">
+        <div class="marginBot">
+            <b>Which G-code will be sent to printer on filament runout?</b>
+        </div>
+        <label class="control-label">{{ _('Command to send:') }}</label>
+        <div class="controls" data-toggle="tooltip">
+            <input id="commandInput" type="text" class="input-large"
+                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code">
+        </div>
+    </div>
+
     <div class="control-group">
         <div class="marginBot">
             <b>Input terminal of the sensor (switch) needs to be connected to ground or 3.3 V</b>
