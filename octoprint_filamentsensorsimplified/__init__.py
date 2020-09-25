@@ -123,7 +123,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         self._printer.commands("M603")
 
     def sending_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
-        if self.changing_filament_initiated and self.m600Enabled:
+        if self.changing_filament_initiated:
             if self.changing_filament_started:
                 if not re.search("^M113", cmd):
                     self.changing_filament_initiated = False
