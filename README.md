@@ -2,6 +2,7 @@
 
 This plugin reacts to short lever microswitch output like [this](https://chinadaier.en.made-in-china.com/product/ABVJkvyMAqcT/China-1A-125VAC-on-off-Kw10-Mini-Micro-Mouse-Switch.html)
 If triggered (switch open) it issues **M600 X0 Y0** command to printer.
+If the printer does not support the **M600** command, it will send **M25** instead which will trigger OctoPrint's pause gcode.
 
 Let's check some features:
 * pop-up notification when printer runs out of filament
@@ -9,7 +10,7 @@ Let's check some features:
 * test button so you know if your sensor really works or not
 * filament check at the start of the print - if no filament present it won't start printing, again pop-up will appear
 * filament check at the end of filament change - just to be sure you won't start printing with no filament
-* check if printer supports M600 when printer connected - if not user will be notified through pop-up
+* check if printer supports M600 when printer connected - if not, M25 will be used instead and user will be notified through pop-up
 * info pop-up when plugin hasn't been configured
 * filament runouts can be repeatable which didn't work with other plugins I tried
 * user-friendly and easy to configure
