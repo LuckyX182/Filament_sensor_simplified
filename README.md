@@ -9,6 +9,7 @@ Let's check some features:
 * test button so you know if your sensor really works or not
 * filament check at the start of the print - if no filament present it won't start printing, again pop-up will appear
 * filament check at the end of filament change - just to be sure you won't start printing with no filament
+* user defined number of verification checks - handy to mitigate false triggers from noisy signal wires
 * check if printer supports M600 when printer connected - if not user will be notified through pop-up
 * info pop-up when plugin hasn't been configured
 * filament runouts can be repeatable which didn't work with other plugins I tried
@@ -40,6 +41,8 @@ Default pin is -1 (not configured) and ground (as it is safer, read below).
 You might experience the same problem as I experienced - the sensor was randomly triggered. Turns out that if running sensor wires along motor wires, it was enough to interfere with sensor reading.
 
 To solve this connect a shielded wire to your sensor and ground the shielding, ideally on both ends.
+
+If this still does not solve the random trigger issue, or you are unable to implement these solutions, you can increase the number of verification checks in the settings. Note: Each verification takes 0.05 seconds, so if your sensor is very close to your extruder, you may not want to set this number too high. I found 5-10 verifications to be more than sufficient in my testing.
 
 If you are unsure about your sensor being triggered, check [OctoPrint logs](https://community.octoprint.org/t/where-can-i-find-octoprints-and-octopis-log-files/299)
 
