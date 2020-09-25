@@ -128,8 +128,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                 if not re.search("^M113", cmd):
                     self.changing_filament_initiated = False
                     self.changing_filament_started = False
-                    if self.no_filament():
-                        self.send_out_of_filament()
             if cmd == "M600 X0 Y0":
                 self.changing_filament_started = True
 
