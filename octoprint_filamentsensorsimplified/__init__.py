@@ -56,6 +56,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def get_api_commands(self):
 		return dict(testSensor=["pin", "power"])
 
+	#check if pin is available, not power pin or not used by someone else
 	def on_api_command(self, command, data):
 		try:
 			selected_power = int(data.get("power"))
@@ -131,6 +132,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self.checkingM600 = True
 		self._printer.commands("M603")
 
+	#this method is called before the gcode is sent to printer
 	def sending_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
 		if self.changing_filament_initiated and self.m600Enabled:
 			if self.changing_filament_started:
@@ -139,10 +141,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					self.changing_filament_started = False
 					if self.no_filament():
 						self.send_out_of_filament()
-			if cmd == "M600 X0 Y0":
+			if cmd == self.g_code:
 				self.changing_filament_started = True
 
+	#this method is called on gcode response
 	def gcode_response_received(self, comm, line, *args, **kwargs):
+		#skip if M600 is disabled
 		if self.m600Enabled:
 
 			if self.changing_filament_started:
@@ -157,6 +161,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					if self.paused_for_user:
 						self.paused_for_user = False
 
+			#waiting for M603 command response
 			if self.checkingM600:
 				if re.search("^ok", line):
 					self._logger.debug("Printer supports M600")
@@ -173,20 +178,27 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					self.checkM600Enabled()
 		return line
 
+	#plugin disabled if pin set to -1
 	def sensor_enabled(self):
 		return self.pin != -1
 
+	#read sensor input value
 	def no_filament(self):
 		GPIO.setmode(GPIO.BOARD)
 		return GPIO.input(self.pin) != self.switch
 
+	#method invoked on event
 	def on_event(self, event, payload):
+		#octoprint connects to 3D printer
 		if event is Events.CONNECTED:
-			# if self.
-			self.checkM600Enabled()
+			#if the command starts with M600, check if printer supports M600
+			if re.search("^M600", self.g_code):
+				self.checkM600Enabled()
+		#octoprint disconnects from 3D printer, reset M600 enabled variable
 		elif event is Events.DISCONNECTED:
 			self.m600Enabled = True
 
+		#if user has logged in show appropriate popup
 		if event is Events.CLIENT_OPENED:
 			if self.changing_filament_initiated and not self.changing_filament_started:
 				self.show_printer_runout_popup()
@@ -195,14 +207,17 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			if self.changing_filament_started and self.paused_for_user:
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False,
 																				msg="Printer ran out of filament! It's waiting for user input"))
-
+		#if the plugin hasn't been initialized
 		if not self.sensor_enabled():
+			#if user has logged in
 			if event is Events.CLIENT_OPENED:
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
 																				msg="Don't forget to configure this plugin."))
+			#if user has started print job
 			elif event is Events.PRINT_STARTED:
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
 																				msg="You may have forgotten to configure this plugin."))
+		#print started with no filament present
 		elif event is Events.PRINT_STARTED and self.no_filament():
 			self._logger.info("Printing aborted: no filament detected!")
 			self._printer.cancel_print()
@@ -253,7 +268,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def send_out_of_filament(self):
 		self.show_printer_runout_popup()
 		self._logger.info("Sending out of filament GCODE")
-		self._printer.commands("M600 X0 Y0")
+		self._printer.commands(self.g_code)
 		self.changing_filament_initiated = True
 
 	def show_printer_runout_popup(self):
