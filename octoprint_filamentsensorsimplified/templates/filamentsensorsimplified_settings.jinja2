@@ -9,8 +9,8 @@
         <div class="controls" data-toggle="tooltip"
              title="{{ _('Specify how the sensor (switch) is connected. One end of the sensor must be wired to ground or 3.3 V. Sensor is triggered when open.') }}">
             <select id="gpioMode" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode_disabled">
-                <option value=BCM>{{ _('Board mode') }}</option>
-                <option value=BOARD>{{ _('BCM mode') }}</option>
+                <option value=10>{{ _('Board mode') }}</option>
+                <option value=11>{{ _('BCM mode') }}</option>
             </select>
         </div>
     </div>

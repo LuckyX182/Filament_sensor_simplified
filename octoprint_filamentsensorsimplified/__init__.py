@@ -69,9 +69,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# Settings hook
 	def get_settings_defaults(self):
-		gpio = GPIO.getMode()
+		gpio = GPIO.getmode()
 		if gpio is -1:
-			gpio = 'BOARD'
 			gpio_disabled = False
 		else:
 			gpio_disabled = True
