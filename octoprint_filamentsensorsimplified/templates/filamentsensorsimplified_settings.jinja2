@@ -1,5 +1,20 @@
 <h3>{{ _('Filament Sensor Simplified') }}</h3>
 <form id="filamentsensorsimplified_settings" class="form-horizontal marginTop">
+
+    <div class="control-group">
+        <div class="marginBot">
+            <b>Select the board mode:</b>
+        </div>
+        <label class="control-label">{{ _('Board mode') }}</label>
+        <div class="controls" data-toggle="tooltip"
+             title="{{ _('Specify how the sensor (switch) is connected. One end of the sensor must be wired to ground or 3.3 V. Sensor is triggered when open.') }}">
+            <select id="gpioMode" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode_disabled">
+                <option value=BCM>{{ _('Board mode') }}</option>
+                <option value=BOARD>{{ _('BCM mode') }}</option>
+            </select>
+        </div>
+    </div>
+
     <div class="control-group">
         <div class="marginBot">
             <b>Which Raspberry Pi pin your sensor output is attached to (-1 disables the plugin)</b>
@@ -29,7 +44,7 @@
         <label class="control-label">{{ _('Sensor is connected to:') }}</label>
         <div class="controls" data-toggle="tooltip"
              title="{{ _('Specify how the sensor (switch) is connected. One end of the sensor must be wired to ground or 3.3 V. Sensor is triggered when open.') }}">
-            <select id="powerInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.switch">
+            <select id="powerInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.power">
                 <option value=0>{{ _('Ground') }}</option>
                 <option value=1>{{ _('3.3V') }}</option>
             </select>

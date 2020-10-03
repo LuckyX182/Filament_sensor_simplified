@@ -42,7 +42,7 @@ $(function () {
                         },
                         556: function () {
                             $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("That is power, ground ot out of range pin, choose other pin");
+                            self.testSensorResult("That is power, ground or out of range pin, choose other pin");
                         }
                     },
                     error: function () {

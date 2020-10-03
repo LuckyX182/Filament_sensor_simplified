@@ -40,12 +40,20 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self.M600_gcode = True
 
 	@property
+	def gpio_mode(self):
+		return self._settings.get(["gpio_mode"])
+
+	@property
+	def gpio_mode_disabled(self):
+		return self._settings.get(["gpio_mode_disabled"])
+
+	@property
 	def pin(self):
 		return int(self._settings.get(["pin"]))
 
 	@property
-	def switch(self):
-		return int(self._settings.get(["switch"]))
+	def power(self):
+		return int(self._settings.get(["power"]))
 
 	@property
 	def g_code(self):
@@ -61,9 +69,17 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# Settings hook
 	def get_settings_defaults(self):
+		gpio = GPIO.getMode()
+		if gpio is -1:
+			gpio = 'BOARD'
+			gpio_disabled = False
+		else:
+			gpio_disabled = True
 		return dict(
+			gpio_mode=gpio,
+			gpio_mode_disabled=gpio_disabled,
 			pin=self.pin_num_disabled,  # Default is -1
-			switch=0,
+			power=0,
 			g_code=self.default_gcode
 		)
 
@@ -100,6 +116,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def on_after_startup(self):
 		self._logger.info("Filament Sensor Simplified started")
+		self.gpio_mode = GPIO.getMode()
 
 	def on_settings_save(self, data):
 		if data.get("pin") is not None:
@@ -184,7 +201,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# read sensor input value
 	def no_filament(self):
 		GPIO.setmode(GPIO.BOARD)
-		return GPIO.input(self.pin) != self.switch
+		return GPIO.input(self.pin) != self.power
 
 	# method invoked on event
 	def on_event(self, event, payload):
@@ -237,7 +254,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					GPIO.setmode(GPIO.BOARD)
 					GPIO.remove_event_detect(self.pin)
 					# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
-					if self.switch is 0:
+					if self.power is 0:
 						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 						GPIO.add_event_detect(
 							self.pin, GPIO.RISING,
