@@ -69,14 +69,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# Settings hook
 	def get_settings_defaults(self):
-		gpio = GPIO.getmode()
-		if gpio is -1:
-			gpio_disabled = False
-		else:
-			gpio_disabled = True
 		return dict(
-			gpio_mode=gpio,
-			gpio_mode_disabled=gpio_disabled,
+			gpio_mode=None,
+			gpio_mode_disabled=False,
 			pin=self.pin_num_disabled,  # Default is -1
 			power=0,
 			g_code=self.default_gcode
@@ -91,7 +86,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		try:
 			selected_power = int(data.get("power"))
 			selected_pin = int(data.get("pin"))
-			GPIO.setmode(GPIO.BOARD)
+			GPIO.setmode(int(data.get("mode")))
 			# first check pins not in use already
 			usage = GPIO.gpio_function(selected_pin)
 			self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
@@ -115,7 +110,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def on_after_startup(self):
 		self._logger.info("Filament Sensor Simplified started")
-		self.gpio_mode = GPIO.getMode()
+		gpio_mode = GPIO.getmode()
+		if gpio_mode is not -1:
+			self._settings.set(["gpio_mode"], gpio_mode)
+			self._settings.set(["gpio_mode_disabled"], True)
+		self._logger.info("Mode is %s" % (gpio_mode))
 
 	def on_settings_save(self, data):
 		if data.get("pin") is not None:

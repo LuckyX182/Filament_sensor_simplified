@@ -29,7 +29,8 @@ $(function () {
                     data: JSON.stringify({
                         "command": "testSensor",
                         "pin": $("#pinInput").val(),
-                        "power": $("#powerInput").val()
+                        "power": $("#powerInput").val(),
+                        "mode": $("#gpioMode").val()
                     }),
                     statusCode: {
                         500: function () {
