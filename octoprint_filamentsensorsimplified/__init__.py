@@ -88,17 +88,19 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			selected_pin = int(data.get("pin"))
 			mode=int(data.get("mode"))
 			if mode is 10:
+				GPIO.cleanup()
 				GPIO.setmode(GPIO.BOARD)
+				# first check pins not in use already
+				usage = GPIO.gpio_function(selected_pin)
+				self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
+				# 1 = input
+				if usage is not 1:
+					# 555 is not http specific so I chose it
+					return "", 555
 			elif mode is 11:
+				GPIO.cleanup()
 				GPIO.setmode(GPIO.BCM)
 
-			# first check pins not in use already
-			usage = GPIO.gpio_function(selected_pin)
-			self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
-			# 1 = input
-			if usage is not 1:
-				# 555 is not http specific so I chose it
-				return "", 555
 			# before read don't let the pin float
 			if selected_power is 0:
 				GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
