@@ -49,6 +49,18 @@
                 <option value=1>{{ _('3.3V') }}</option>
             </select>
         </div>
+
+        <div class="marginBot">
+            <b>Select if the switch is triggered when open or closed</b>
+        </div>
+        <label class="control-label">{{ _('Board mode') }}</label>
+        <div class="controls" data-toggle="tooltip"
+            <select id="triggered" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.triggered">
+                <option value=0>{{ _('Triggered when open') }}</option>
+                <option value=1>{{ _('Triggered when closed') }}</option>
+            </select>
+        </div>
+
         <div>
             <table style="margin-left: 180px; margin-top: 20px">
                 <tr>
@@ -61,10 +73,7 @@
                 </tr>
             </table>
         </div>
-        <div class="alert-info wy-alert-warning marginTop">
-            <span class="icon-info-sign"></span>
-            <span class="octoFontFamily iconIndent">Sensor is triggered when open.</span>
-        </div>
+
         <div class="alert-danger">
             <span class="icon-warning-sign"></span>
             <span class="octoFontFamily iconIndent">Warning! Never connect the sensor to 5V! 5V could destroy GPIO of your Raspberry Pi.</span>
@@ -72,19 +81,6 @@
         <div style="font-size: 11px">
             For more information click <a
                 href="https://github.com/LuckyX182/Filament_sensor_simplified">here</a>
-        </div>
-    </div>
-
-    <div class="control-group">
-        <div class="marginBot">
-            <b>Select if the switch is triggered when open or closed</b>
-        </div>
-        <label class="control-label">{{ _('Board mode') }}</label>
-        <div class="controls" data-toggle="tooltip"
-            <select id="triggered" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.triggered">
-                <option value=0>{{ _('Triggered when open') }}</option>
-                <option value=1>{{ _('Triggered when closed') }}</option>
-            </select>
         </div>
     </div>
 </form>
