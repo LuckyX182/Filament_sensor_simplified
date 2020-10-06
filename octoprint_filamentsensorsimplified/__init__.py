@@ -59,6 +59,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def g_code(self):
 		return self._settings.get(["g_code"])
 
+	@property
+	def triggered(self):
+		return self._settings.get(["triggered"])
+
 	# AssetPlugin hook
 	def get_assets(self):
 		return dict(js=["js/filamentsensorsimplified.js"], css=["css/filamentsensorsimplified.css"])
@@ -74,7 +78,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			gpio_mode_disabled=False,
 			pin=self.pin_num_disabled,  # Default is -1
 			power=0,
-			g_code=self.default_gcode
+			g_code=self.default_gcode,
+			triggered=0
 		)
 
 	# simpleApiPlugin
@@ -263,19 +268,33 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
 					if self.power is 0:
 						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-						GPIO.add_event_detect(
-							self.pin, GPIO.RISING,
-							callback=self.sensor_callback,
-							bouncetime=self.bounce_time
-						)
+						#triggered when open
+						if self.triggered is 0:
+							GPIO.add_event_detect(
+								self.pin, GPIO.RISING,
+								callback=self.sensor_callback,
+								bouncetime=self.bounce_time)
+						#triggered when closed
+						else:
+							GPIO.add_event_detect(
+								self.pin, GPIO.FALLING,
+								callback=self.sensor_callback,
+								bouncetime=self.bounce_time)
 					# 1 = sensor is powered, react to falling edge pulled down by pull down resistor
 					else:
 						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-						GPIO.add_event_detect(
-							self.pin, GPIO.FALLING,
-							callback=self.sensor_callback,
-							bouncetime=self.bounce_time
-						)
+						# triggered when open
+						if self.triggered is 0:
+							GPIO.add_event_detect(
+								self.pin, GPIO.RISING,
+								callback=self.sensor_callback,
+								bouncetime=self.bounce_time)
+						# triggered when closed
+						else:
+							GPIO.add_event_detect(
+								self.pin, GPIO.FALLING,
+								callback=self.sensor_callback,
+								bouncetime=self.bounce_time)
 			# Disable sensor
 			elif event in (
 					Events.PRINT_DONE,
