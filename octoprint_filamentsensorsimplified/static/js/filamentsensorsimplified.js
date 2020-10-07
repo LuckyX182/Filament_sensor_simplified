@@ -30,7 +30,8 @@ $(function () {
                         "command": "testSensor",
                         "pin": $("#pinInput").val(),
                         "power": $("#powerInput").val(),
-                        "mode": $("#gpioMode").val()
+                        "mode": $("#gpioMode").val(),
+                        "triggered": $("#triggered").val()
                     }),
                     statusCode: {
                         500: function () {
