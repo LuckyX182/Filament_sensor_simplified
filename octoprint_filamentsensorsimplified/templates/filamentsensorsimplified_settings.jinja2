@@ -5,7 +5,7 @@
         <div class="marginBot">
             <b>Select the board mode:</b>
         </div>
-        <label class="control-label">{{ _('Board mode') }}</label>
+        <label class="control-label">{{ _('Board mode:') }}</label>
         <div class="controls" data-toggle="tooltip"
              title="{{ _('Board - referring to the pins by the number, BCM - referring to the pins by the "Broadcom SOC channel"') }}">
             <select id="gpioMode" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode_disabled">
@@ -13,11 +13,14 @@
                 <option value=11>{{ _('BCM mode') }}</option>
             </select>
         </div>
+        <div data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode_disabled">
+            <p style="color: red; margin-left:180px; margin-top:10px; margin-bottom:-15px">Mode has been set by third party</p>
+        </div>
     </div>
 
     <div class="control-group">
         <div class="marginBot">
-            <b>Which Raspberry Pi pin your sensor output is attached to (-1 disables the plugin)</b>
+            <b>Which Raspberry Pi pin is your sensor output attached to? (-1 disables the plugin)</b>
         </div>
         <label class="control-label">{{ _('Board pin number:') }}</label>
         <div class="controls" data-toggle="tooltip">

@@ -57,7 +57,7 @@ $(function () {
                             self.testSensorResult("OK! Sensor detected filament.");
                         } else {
                             $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("Fail! Sensor open (triggered).")
+                            self.testSensorResult("Fail! Sensor triggered.")
                         }
                     }
                 }
