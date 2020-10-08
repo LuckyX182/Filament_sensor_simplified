@@ -86,7 +86,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def get_api_commands(self):
 		return dict(testSensor=["pin", "power"])
 
-	# test pin value, not power pin or not used by someone else
+	# test pin value, power pin or if its used by someone else
 	def on_api_command(self, command, data):
 		try:
 			selected_power = int(data.get("power"))
@@ -94,6 +94,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			mode = int(data.get("mode"))
 			triggered = int(data.get("triggered"))
 
+			# BOARD
 			if mode is 10:
 				GPIO.cleanup()
 				GPIO.setmode(GPIO.BOARD)
@@ -104,7 +105,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				if usage is not 1:
 					# 555 is not http specific so I chose it
 					return "", 555
+			# BCM
 			elif mode is 11:
+				# BCM range 1-27
+				if selected_pin > 27:
+					return "", 556
 				GPIO.cleanup()
 				GPIO.setmode(GPIO.BCM)
 
@@ -119,7 +124,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			triggered_bool = (pin_value + selected_power + triggered) % 2 is 0
 			return flask.jsonify(triggered=triggered_bool)
 		except ValueError:
-			# ValueError occurs when reading from power or ground pins
+			# ValueError occurs when reading from power, ground or out of range pins
 			return "", 556
 
 	def on_after_startup(self):
@@ -129,28 +134,45 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self._settings.set(["gpio_mode"], gpio_mode)
 			self._settings.set(["gpio_mode_disabled"], True)
 		else:
+			if self.gpio_mode is 10:
+				GPIO.cleanup()
+				GPIO.setmode(GPIO.BOARD)
+			elif self.gpio_mode is 11:
+				GPIO.cleanup()
+				GPIO.setmode(GPIO.BCM)
 			self._settings.set(["gpio_mode_disabled"], False)
 		self._logger.info("Mode is %s" % (gpio_mode))
 
 	def on_settings_save(self, data):
-		if data.get("pin") is not None:
-			pin_to_save = int(data.get("pin"))
+		mode_to_save = int(data.get("gpio_mode"))
+		pin_to_save = int(data.get("pin"))
 
+		if pin_to_save is not None:
 			# check if pin is not power/ground pin or out of range but allow -1
 			if pin_to_save is not self.pin_num_disabled:
 				try:
-					# before saving check if pin not used by others
-					usage = GPIO.gpio_function(pin_to_save)
-					self._logger.debug("usage on pin %s is %s" % (pin_to_save, usage))
-					if usage is not 1:
-						self._logger.info(
-							"You are trying to save pin %s which is already used by others" % (pin_to_save))
-						self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
-																						msg="Settings not saved, you are trying to save pin which is already used by others"))
-						return
-					GPIO.setup(pin_to_save, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-					GPIO.input(pin_to_save)
-					GPIO.cleanup(pin_to_save)
+					# BOARD
+					if mode_to_save is 10:
+						# before saving check if pin not used by others
+						usage = GPIO.gpio_function(pin_to_save)
+						self._logger.debug("usage on pin %s is %s" % (pin_to_save, usage))
+						if usage is not 1:
+							self._logger.info(
+								"You are trying to save pin %s which is already used by others" % (pin_to_save))
+							self._plugin_manager.send_plugin_message(self._identifier,
+																	 dict(type="error", autoClose=True,
+																		  msg="Settings not saved, you are trying to save pin which is already used by others"))
+							return
+
+					# BCM
+					elif mode_to_save is 11:
+						if pin_to_save > 27:
+							self._logger.info(
+								"You are trying to save pin %s which is out of range" % (pin_to_save))
+							self._plugin_manager.send_plugin_message(self._identifier,
+																	 dict(type="error", autoClose=True,
+																		  msg="Settings not saved, you are trying to save pin which is out of range"))
+
 				except ValueError:
 					self._logger.info(
 						"You are trying to save pin %s which is ground/power pin or out of range" % (pin_to_save))
@@ -214,8 +236,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# read sensor input value
 	def no_filament(self):
-		GPIO.setmode(GPIO.BOARD)
-		return GPIO.input(self.pin) != self.power
+		return (GPIO.input(self.pin) + self.power + self.triggered) % 2 is 0
 
 	# method invoked on event
 	def on_event(self, event, payload):
@@ -245,18 +266,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
 																				msg="Don't forget to configure this plugin."))
 
-		elif event is Events.PRINT_STARTED:
-			# print started without plugin configuration
-			if not self.sensor_enabled():
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
-																				msg="You may have forgotten to configure this plugin."))
-			# print started with no filament present
-			elif self.no_filament:
-				self._logger.info("Printing aborted: no filament detected!")
-				self._printer.cancel_print()
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
-																				msg="No filament detected! Print cancelled."))
-
 		if not (self.M600_gcode and not self.M600_supported):
 			# Enable sensor
 			if event in (
@@ -265,18 +274,21 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			):
 				self._logger.info("%s: Enabling filament sensor." % (event))
 				if self.sensor_enabled():
-					GPIO.setmode(GPIO.BOARD)
+					if self.gpio_mode is 10:
+						GPIO.setmode(GPIO.BOARD)
+					elif self.gpio_mode is 11:
+						GPIO.setmode(GPIO.BCM)
 					GPIO.remove_event_detect(self.pin)
 					# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
 					if self.power is 0:
 						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-						#triggered when open
+						# triggered when open
 						if self.triggered is 0:
 							GPIO.add_event_detect(
 								self.pin, GPIO.RISING,
 								callback=self.sensor_callback,
 								bouncetime=self.bounce_time)
-						#triggered when closed
+						# triggered when closed
 						else:
 							GPIO.add_event_detect(
 								self.pin, GPIO.FALLING,
@@ -297,6 +309,20 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 								self.pin, GPIO.FALLING,
 								callback=self.sensor_callback,
 								bouncetime=self.bounce_time)
+
+					# print started without plugin configuration
+					if not self.sensor_enabled():
+						self._plugin_manager.send_plugin_message(self._identifier,
+																 dict(type="info", autoClose=True,
+																	  msg="You may have forgotten to configure this plugin."))
+					# print started with no filament present
+					elif self.no_filament:
+						self._logger.info("Printing aborted: no filament detected!")
+						self._printer.cancel_print()
+						self._plugin_manager.send_plugin_message(self._identifier,
+																 dict(type="error", autoClose=True,
+																	  msg="No filament detected! Print cancelled."))
+
 			# Disable sensor
 			elif event in (
 					Events.PRINT_DONE,
