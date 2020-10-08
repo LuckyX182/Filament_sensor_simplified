@@ -236,7 +236,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# read sensor input value
 	def no_filament(self):
-		return (GPIO.input(self.pin) + self.power + self.triggered) % 2 is 0
+		return (GPIO.input(self.pin) + self.power + self.triggered) % 2 is not 0
 
 	# method invoked on event
 	def on_event(self, event, payload):
