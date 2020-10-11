@@ -25,7 +25,7 @@
         <label class="control-label">{{ _('Board pin number:') }}</label>
         <div class="controls" data-toggle="tooltip">
             <input id="pinInput" type="number" step="1" min="-1" max="40" class="input-mini text-right"
-                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin">
+                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.printing">
         </div>
     </div>
 
@@ -36,7 +36,7 @@
         <label class="control-label">{{ _('Command to send:') }}</label>
         <div class="controls" data-toggle="tooltip">
             <input id="commandInput" type="text" class="input-large"
-                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code">
+                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.printing">
         </div>
     </div>
 
@@ -47,7 +47,7 @@
         <label class="control-label">{{ _('Sensor is connected to:') }}</label>
         <div class="controls" data-toggle="tooltip"
              title="{{ _('Specify how the sensor (switch) is connected. One end of the sensor must be wired to ground or 3.3 V. Sensor is triggered when open.') }}">
-            <select id="powerInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.power">
+            <select id="powerInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.power, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.printing">
                 <option value=0>{{ _('Ground') }}</option>
                 <option value=1>{{ _('3.3V') }}</option>
             </select>
@@ -60,7 +60,7 @@
         </div>
         <label class="control-label">{{ _('Switch type:') }}</label>
         <div class="controls" data-toggle="tooltip">
-            <select id="triggeredInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.triggered">
+            <select id="triggeredInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.triggered, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.printing">
                 <option value=0>{{ _('Triggered when open') }}</option>
                 <option value=1>{{ _('Triggered when closed') }}</option>
             </select>
@@ -70,7 +70,7 @@
             <table style="margin-left: 180px; margin-top: 20px">
                 <tr>
                     <td>
-                        <input type="button" class="btn" data-bind="click: testSensor" value="Test sensor">
+                        <input type="button" class="btn" data-bind="click: testSensor, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.printing" value="Test sensor">
                     </td>
                     <td style="padding-left: 10px">
                         <p id="sensor-test-result-text" data-bind="text: testSensorResult" style="display: inline;"></p>
