@@ -3,10 +3,10 @@ $(function () {
         var self = this;
         self.settingsViewModel = parameters[0];
         self.testSensorResult = ko.observable(null);
+        self.printing = ko.observable(false);
 
         self.onDataUpdaterPluginMessage = function (plugin, data) {
             if (plugin !== "filamentsensorsimplified") {
-                console.log('Ignoring ' + plugin);
                 return;
             }
 
@@ -64,8 +64,26 @@ $(function () {
             );
         }
 
+        getPrinterState = function () {
+                $.ajax({
+                    url: "/api/printer",
+                    type: "get",
+                    dataType: "json",
+                    headers: {"X-Api-Key": UI_API_KEY},
+                    success: function (result) {
+                        if (result.state.text == "Printing") {
+                            self.printing(true);
+                        } else {
+                            self.printing(false);
+                        }
+                    }
+                 }
+             );
+        }
+
         self.onSettingsShown = function () {
             self.testSensorResult("");
+            getPrinterState();
         }
     }
 
