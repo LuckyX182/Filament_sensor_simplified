@@ -31,7 +31,7 @@ $(function () {
                         "pin": $("#pinInput").val(),
                         "power": $("#powerInput").val(),
                         "mode": $("#gpioMode").val(),
-                        "triggered": $("#triggered").val()
+                        "triggered": $("#triggeredInput").val()
                     }),
                     statusCode: {
                         500: function () {

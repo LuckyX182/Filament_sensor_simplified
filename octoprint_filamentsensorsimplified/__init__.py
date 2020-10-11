@@ -61,7 +61,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	@property
 	def triggered(self):
-		return self._settings.get(["triggered"])
+		return int(self._settings.get(["triggered"]))
 
 	# AssetPlugin hook
 	def get_assets(self):
@@ -279,6 +279,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					elif self.gpio_mode is 11:
 						GPIO.setmode(GPIO.BCM)
 					GPIO.remove_event_detect(self.pin)
+
 					# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
 					if self.power is 0:
 						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -294,6 +295,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 								self.pin, GPIO.FALLING,
 								callback=self.sensor_callback,
 								bouncetime=self.bounce_time)
+
 					# 1 = sensor is powered, react to falling edge pulled down by pull down resistor
 					else:
 						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
@@ -310,18 +312,19 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 								callback=self.sensor_callback,
 								bouncetime=self.bounce_time)
 
-					# print started without plugin configuration
-					if not self.sensor_enabled():
-						self._plugin_manager.send_plugin_message(self._identifier,
-																 dict(type="info", autoClose=True,
-																	  msg="You may have forgotten to configure this plugin."))
 					# print started with no filament present
-					elif self.no_filament:
+					if self.no_filament():
 						self._logger.info("Printing aborted: no filament detected!")
 						self._printer.cancel_print()
 						self._plugin_manager.send_plugin_message(self._identifier,
 																 dict(type="error", autoClose=True,
 																	  msg="No filament detected! Print cancelled."))
+
+				# print started without plugin configuration
+				else:
+					self._plugin_manager.send_plugin_message(self._identifier,
+															 dict(type="info", autoClose=True,
+																  msg="You may have forgotten to configure this plugin."))
 
 			# Disable sensor
 			elif event in (
