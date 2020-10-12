@@ -8,7 +8,7 @@
         <label class="control-label">{{ _('Board mode:') }}</label>
         <div class="controls" data-toggle="tooltip"
              title="{{ _('Board - referring to the pins by the number, BCM - referring to the pins by the "Broadcom SOC channel"') }}">
-            <select id="gpioMode" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode, disable:settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode_disabled">
+            <select id="gpioMode" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode, disable:gpio_mode_disabled">
                 <option value=10>{{ _('Board mode') }}</option>
                 <option value=11>{{ _('BCM mode') }}</option>
             </select>

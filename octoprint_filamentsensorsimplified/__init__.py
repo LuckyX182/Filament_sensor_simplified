@@ -21,6 +21,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	pin_num_disabled = -1
 	# default gcode
 	default_gcode = 'M600 X0 Y0'
+	# gpio mode disabled
+	gpio_mode_disabled = False
+	# printing flag
+	printing = False
 
 	def initialize(self):
 		GPIO.setwarnings(True)
@@ -44,10 +48,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		return self._settings.get(["gpio_mode"])
 
 	@property
-	def gpio_mode_disabled(self):
-		return self._settings.get(["gpio_mode_disabled"])
-
-	@property
 	def pin(self):
 		return int(self._settings.get(["pin"]))
 
@@ -63,10 +63,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def triggered(self):
 		return int(self._settings.get(["triggered"]))
 
-	@property
-	def printing(self):
-		return self._settings.get(["printing"])
-
 	# AssetPlugin hook
 	def get_assets(self):
 		return dict(js=["js/filamentsensorsimplified.js"], css=["css/filamentsensorsimplified.css"])
@@ -79,17 +75,23 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def get_settings_defaults(self):
 		return dict(
 			gpio_mode=None,
-			gpio_mode_disabled=False,
 			pin=self.pin_num_disabled,  # Default is -1
 			power=0,
 			g_code=self.default_gcode,
-			triggered=0,
-			printing=False
+			triggered=0
 		)
 
 	# simpleApiPlugin
 	def get_api_commands(self):
 		return dict(testSensor=["pin", "power"])
+
+	@octoprint.plugin.BlueprintPlugin.route("/disable", methods=["GET"])
+	def get_disable(self):
+		if self.printing:
+			gpio_mode_disabled = True
+		else:
+			gpio_mode_disabled = self.gpio_mode_disabled
+		return flask.jsonify(gpio_mode_disabled=gpio_mode_disabled, printing=self.printing)
 
 	# test pin value, power pin or if its used by someone else
 	def on_api_command(self, command, data):
@@ -137,7 +139,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		gpio_mode = GPIO.getmode()
 		if gpio_mode is not None:
 			self._settings.set(["gpio_mode"], gpio_mode)
-			self._settings.set(["gpio_mode_disabled"], True)
+			self.gpio_mode_disabled = True
 		else:
 			if self.gpio_mode is 10:
 				GPIO.cleanup()
@@ -145,7 +147,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			elif self.gpio_mode is 11:
 				GPIO.cleanup()
 				GPIO.setmode(GPIO.BCM)
-			self._settings.set(["gpio_mode_disabled"], False)
+			self.gpio_mode_disabled = False
 		self._logger.info("Mode is %s" % (gpio_mode))
 
 	def on_settings_save(self, data):
@@ -328,7 +330,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 																	  msg="No filament detected! Print cancelled."))
 					# print started
 					else:
-						self._settings.set(["printing"], True)
+						self.printing = True
 
 				# print started without plugin configuration
 				else:
@@ -348,7 +350,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self.changing_filament_initiated = False
 				self.changing_filament_started = False
 				self.paused_for_user = False
-				self._settings.set(["printing"], False)
+				self.printing = False
 
 	def sensor_callback(self, _):
 		sleep(1)

@@ -3,6 +3,7 @@ $(function () {
         var self = this;
         self.settingsViewModel = parameters[0];
         self.testSensorResult = ko.observable(null);
+        self.gpio_mode_disabled = ko.observable(false);
         self.printing = ko.observable(false);
 
         self.onDataUpdaterPluginMessage = function (plugin, data) {
@@ -64,26 +65,21 @@ $(function () {
             );
         }
 
-        getPrinterState = function () {
-                $.ajax({
-                    url: "/api/printer",
-                    type: "get",
-                    dataType: "json",
-                    headers: {"X-Api-Key": UI_API_KEY},
-                    success: function (result) {
-                        if (result.state.text == "Printing") {
-                            self.printing(true);
-                        } else {
-                            self.printing(false);
-                        }
-                    }
-                 }
-             );
-        }
+        getDisabled = function (item) {
+            $.ajax({
+                type: "GET",
+                dataType: "json",
+                url: self.buildPluginUrl("/disable"),
+                success: function (result) {
+                    self.gpio_mode_disabled(result.gpio_mode_disabled)
+                    self.printing(result.printing)
+                }
+            });
+        };
 
         self.onSettingsShown = function () {
             self.testSensorResult("");
-            getPrinterState();
+            getDisabled();
         }
     }
 
