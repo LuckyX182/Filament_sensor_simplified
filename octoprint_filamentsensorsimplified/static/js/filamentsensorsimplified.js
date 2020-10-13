@@ -5,6 +5,9 @@ $(function () {
         self.testSensorResult = ko.observable(null);
         self.gpio_mode_disabled = ko.observable(false);
         self.printing = ko.observable(false);
+        self.gpio_mode_disabled_by_3rd = ko.computed(function() {
+            return this.gpio_mode_disabled() && !this.printing();
+        }, this);
 
         self.onDataUpdaterPluginMessage = function (plugin, data) {
             if (plugin !== "filamentsensorsimplified") {
@@ -55,10 +58,10 @@ $(function () {
                     success: function (result) {
                         if (result.triggered === true) {
                             $("#sensor-test-result-text").css("color", "green");
-                            self.testSensorResult("OK! Sensor detected filament.");
+                            self.testSensorResult("Sensor detected filament!");
                         } else {
                             $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("Fail! Sensor triggered.")
+                            self.testSensorResult("Sensor triggered!")
                         }
                     }
                 }
