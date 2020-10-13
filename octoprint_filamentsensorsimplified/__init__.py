@@ -292,7 +292,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 						GPIO.setmode(GPIO.BOARD)
 					elif self.gpio_mode is 11:
 						GPIO.setmode(GPIO.BCM)
-					GPIO.remove_event_detect(self.pin)
 
 					# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
 					if self.power is 0:
