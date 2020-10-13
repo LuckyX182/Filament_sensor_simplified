@@ -14,6 +14,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 									   octoprint.plugin.TemplatePlugin,
 									   octoprint.plugin.SettingsPlugin,
 									   octoprint.plugin.SimpleApiPlugin,
+									   octoprint.plugin.BlueprintPlugin,
 									   octoprint.plugin.AssetPlugin):
 	# bounce time for sensing
 	bounce_time = 250
@@ -45,7 +46,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	@property
 	def gpio_mode(self):
-		return self._settings.get(["gpio_mode"])
+		return int(self._settings.get(["gpio_mode"]))
 
 	@property
 	def pin(self):
@@ -87,10 +88,14 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	@octoprint.plugin.BlueprintPlugin.route("/disable", methods=["GET"])
 	def get_disable(self):
+		self._logger.debug("getting disabled info")
 		if self.printing:
+			self._logger.debug("printing")
 			gpio_mode_disabled = True
 		else:
+			self._logger.debug("not printing")
 			gpio_mode_disabled = self.gpio_mode_disabled
+
 		return flask.jsonify(gpio_mode_disabled=gpio_mode_disabled, printing=self.printing)
 
 	# test pin value, power pin or if its used by someone else

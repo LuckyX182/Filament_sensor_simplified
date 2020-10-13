@@ -69,8 +69,11 @@ $(function () {
             $.ajax({
                 type: "GET",
                 dataType: "json",
-                url: self.buildPluginUrl("/disable"),
+                url: "plugin/filamentsensorsimplified/disable",
                 success: function (result) {
+                    console.log("success");
+                    console.log(result.gpio_mode_disabled);
+                    console.log(result.printing);
                     self.gpio_mode_disabled(result.gpio_mode_disabled)
                     self.printing(result.printing)
                 }
