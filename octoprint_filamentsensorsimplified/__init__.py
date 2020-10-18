@@ -126,14 +126,17 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				GPIO.setmode(GPIO.BCM)
 
 			# before read don't let the pin float
+			self._logger.debug("selected power is %s" % selected_power)
 			if selected_power is 0:
 				GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 			else:
 				GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 			pin_value = GPIO.input(selected_pin)
+			self._logger.debug("pin value is %s" % pin_value)
 			# reset input to pull down after read
 			GPIO.cleanup(selected_pin)
 			triggered_bool = (pin_value + selected_power + triggered) % 2 is 0
+			self._logger.debug("triggered value %s" % triggered_bool)
 			return flask.jsonify(triggered=triggered_bool)
 		except ValueError:
 			# ValueError occurs when reading from power, ground or out of range pins

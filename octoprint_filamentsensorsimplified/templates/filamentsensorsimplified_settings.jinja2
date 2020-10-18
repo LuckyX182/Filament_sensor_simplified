@@ -22,7 +22,7 @@
         <div class="marginBot">
             <b>Which Raspberry Pi pin is your sensor output attached to? (-1 disables the plugin)</b>
         </div>
-        <label class="control-label">{{ _('Board pin number:') }}</label>
+        <label class="control-label">{{ _('Pin number:') }}</label>
         <div class="controls" data-toggle="tooltip">
             <input id="pinInput" type="number" step="1" min="-1" max="40" class="input-mini text-right"
                    data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin, disable:printing">
@@ -79,7 +79,12 @@
             </table>
         </div>
 
-        <div class="alert-danger marginTop">
+        <div class="alert-info wy-alert-warning marginTop">
+            <span class="icon-info-sign"></span>
+            <span class="octoFontFamily iconIndent">Pins 3 and 5 (Board mode) or pins 2 and 3 (BCM mode) have physical pull up resistor. If sensor is connected to 3.3 V this plugin won't work.</span>
+        </div>
+
+        <div class="alert-danger">
             <span class="icon-warning-sign"></span>
             <span class="octoFontFamily iconIndent">Warning! Never connect the sensor to 5V! 5V could destroy GPIO of your Raspberry Pi.</span>
         </div>

@@ -1,7 +1,7 @@
 # Filament sensor simplified
 
 This plugin reacts to short lever microswitch output like [this](https://chinadaier.en.made-in-china.com/product/ABVJkvyMAqcT/China-1A-125VAC-on-off-Kw10-Mini-Micro-Mouse-Switch.html)
-If triggered (switch open) it issues **M600 X0 Y0** command to printer.
+If triggered it issues configured command to printer.
 
 Let's check some features:
 * pop-up notification when printer runs out of filament
@@ -9,12 +9,20 @@ Let's check some features:
 * test button so you know if your sensor really works or not
 * filament check at the start of the print - if no filament present it won't start printing, again pop-up will appear
 * filament check at the end of filament change - just to be sure you won't start printing with no filament
-* check if printer supports M600 when printer connected - if not user will be notified through pop-up
+* check if printer supports M600 when printer connected and gcode starts with M600 - if not user will be notified through pop-up
 * info pop-up when plugin hasn't been configured
 * filament runouts can be repeatable which didn't work with other plugins I tried
 * user-friendly and easy to configure
 * pin validation so you don't accidentally save wrong pin number
+* detection of used GPIO mode - this makes it compatible with other plugins
 * runs on OctoPrint 1.3.0 and higher
+
+Configurable fields:
+* mode - BOARD/BCM
+* pin number
+* gcode sent on filament runout
+* sensor power input
+* trigger mode
 
 **NOTE: this plugin won't work if you use OctoPrint only to start printing from SD card**
 
