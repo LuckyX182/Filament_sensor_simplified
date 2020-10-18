@@ -17,13 +17,6 @@ Let's check some features:
 * detection of used GPIO mode - this makes it compatible with other plugins
 * runs on OctoPrint 1.3.0 and higher
 
-Configurable fields:
-* mode - BOARD/BCM
-* pin number
-* gcode sent on filament runout
-* sensor power input
-* trigger mode
-
 **NOTE: this plugin won't work if you use OctoPrint only to start printing from SD card**
 
 ## Setup
@@ -35,7 +28,14 @@ or manually using this URL:
 
 ## Configuration
 
-Configuration couldn't be simpler, all you need is to configure listening board pin (board mode) and if the second switch terminal is connected to ground or 3.3V.
+Configuration consists of these parameters:
+1. **GPIO mode** - BOARD or BCM mode, **BOARD mode** - referring to the pins by the number, **BCM mode** - referring to the pins
+by the "Broadcom SOC channel", if this is selected by 3rd party, this option will be disabled with note on GUI
+2. **pin number** - pin number based on selected mode
+3. **gcode** to send to printer on filament runout - default is M600 X0 Y0
+4. **power input to sensor** - input is connected to **ground or 3.3 V**
+5. **switch type** - switch should be **triggered when opened** (input of the sensor doesn't transfer to its output) or **triggered
+when closed** (input of the sensor is transferred to its output)
 
 Default pin is -1 (not configured) and ground (as it is safer, read below).
 
