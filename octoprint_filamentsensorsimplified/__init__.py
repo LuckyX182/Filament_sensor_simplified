@@ -360,10 +360,16 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self.printing = False
 
 	def sensor_callback(self, _):
-		sleep(1)
-		self._logger.info("Sensor was triggered")
-		if not self.changing_filament_initiated:
-			self.send_out_of_filament()
+		trigger = True
+		for x in range(0, 5):
+			sleep(0.05)
+			if not self.no_filament():
+				trigger = False
+
+		if trigger:
+			self._logger.info("Sensor was triggered")
+			if not self.changing_filament_initiated:
+				self.send_out_of_filament()
 
 	def send_out_of_filament(self):
 		self.show_printer_runout_popup()
