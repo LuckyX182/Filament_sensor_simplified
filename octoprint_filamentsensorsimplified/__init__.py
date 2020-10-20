@@ -75,7 +75,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# Settings hook
 	def get_settings_defaults(self):
 		return dict(
-			gpio_mode=None,
+			gpio_mode=10,
 			pin=self.pin_num_disabled,  # Default is -1
 			power=0,
 			g_code=self.default_gcode,
