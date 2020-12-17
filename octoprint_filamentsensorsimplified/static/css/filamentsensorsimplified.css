@@ -1,15 +1,17 @@
 #filamentsensorsimplified_settings .iconRight{
 	margin-right: -25px;
+	margin-top: 3px;
 	float: right;
 }
 
 #filamentsensorsimplified_settings div.controls div.alert{
 	margin-bottom: 0px;
+	margin-top: 5px;
 }
 
 #filamentsensorsimplified_settings .pulsAlert{
 	animation: pulsate 1s ease-out;
-    animation-iteration-count: 3;
+    animation-iteration-count: 1;
 }
 
 #filamentsensorsimplified_settings_testResult{

@@ -1,6 +1,8 @@
 $(function () {
     function filamentsensorsimplifiedViewModel(parameters) {
         var self = this;
+
+        self.validPinsBoard = [3,5,7,11,13,15,19,21,23,27,29,31,33,35,37,8,10,12,16,18,22,24,26,28,32,36,38,40];
         self.settingsViewModel = parameters[0];
         self.testSensorResult = ko.observable(null);
         self.gpio_mode_disabled = ko.observable(false);
@@ -70,10 +72,12 @@ $(function () {
                 }
             );
         }
-        self.checkWarningPullUp = function(){
-            var mode =  $('#filamentsensorsimplified_settings_gpioMode').val();
-            var pin =  $('#filamentsensorsimplified_settings_pinInput').val();
-            var sencon = $('#filamentsensorsimplified_settings_powerInput').val();
+        self.checkWarningPullUp = function(event){
+            var mode = parseInt($('#filamentsensorsimplified_settings_gpioMode').val(),10);
+            var pin = parseInt($('#filamentsensorsimplified_settings_pinInput').val(),10);
+            var sencon = parseInt($('#filamentsensorsimplified_settings_powerInput').val(),10);
+
+            // Show alerts
             if (
                 sencon == 1 && (
                     (mode == 10 && (pin==3 || pin == 5))
@@ -84,6 +88,29 @@ $(function () {
                 $('#filamentsensorsimplified_settings_pullupwarn').removeClass('hidden pulsAlert').addClass('pulsAlert');
             }else{
                 $('#filamentsensorsimplified_settings_pullupwarn').addClass('hidden').removeClass('pulsAlert');
+            }
+
+            // Set max to right board type - 10 = Boardmode
+            var warnactive = false;
+            if (mode == 10){
+                $('#filamentsensorsimplified_settings_pinInput').attr('max',40);
+                if (pin != 0 && $.inArray(pin,self.validPinsBoard) == -1){
+                    warnactive = true;
+                    $('#filamentsensorsimplified_settings_badpin').removeClass('hidden pulsAlert').addClass('pulsAlert');
+                }else{
+                    $('#filamentsensorsimplified_settings_badpin').addClass('hidden').removeClass('pulsAlert');
+                }
+            }else{
+                $('#filamentsensorsimplified_settings_pinInput').attr('max',27);
+            }
+
+            // High or low
+            if ($('#filamentsensorsimplified_settings_pinInput').attr('max') < pin || pin < 0){
+                $('#filamentsensorsimplified_settings_badpin').removeClass('hidden pulsAlert').addClass('pulsAlert');
+            }else{
+                if (!warnactive){
+                    $('#filamentsensorsimplified_settings_badpin').addClass('hidden').removeClass('pulsAlert');
+                }
             }
         }
 

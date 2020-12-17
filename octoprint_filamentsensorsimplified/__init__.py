@@ -19,7 +19,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# bounce time for sensing
 	bounce_time = 250
 	# pin number used as plugin disabled
-	pin_num_disabled = -1
+	pin_num_disabled = 0
 	# default gcode
 	default_gcode = 'M600 X0 Y0'
 	# gpio mode disabled
@@ -145,6 +145,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def on_after_startup(self):
 		self._logger.info("Filament Sensor Simplified started")
 		gpio_mode = GPIO.getmode()
+
+		# Fix old -1 settings to 0
+		if self.pin is -1:
+			self._logger.info("Fixing old settings from -1 t0 0")
+			self._settings.set(["pin"], 0)
+			self.pin = 0
 		if gpio_mode is not None:
 			self._settings.set(["gpio_mode"], gpio_mode)
 			self.gpio_mode_disabled = True
@@ -159,43 +165,51 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._logger.info("Mode is %s" % (gpio_mode))
 
 	def on_settings_save(self, data):
-		if "pin" in data and "gpio_mode" in data:
+		# get non changed settngs to do the validation if only one of these is changed
+		pin_to_save = self._settings.get_int(["pin"])
+		mode_to_save = self._settings.get_int(["gpio_mode"])
 
-			mode_to_save = int(data.get("gpio_mode"))
+		if "pin" in data:
 			pin_to_save = int(data.get("pin"))
 
-			if pin_to_save is not None:
-				# check if pin is not power/ground pin or out of range but allow -1
-				if pin_to_save is not self.pin_num_disabled:
-					try:
-						# BOARD
-						if mode_to_save is 10:
-							# before saving check if pin not used by others
-							usage = GPIO.gpio_function(pin_to_save)
-							self._logger.debug("usage on pin %s is %s" % (pin_to_save, usage))
-							if usage is not 1:
-								self._logger.info(
-									"You are trying to save pin %s which is already used by others" % (pin_to_save))
-								self._plugin_manager.send_plugin_message(self._identifier,
-																		 dict(type="error", autoClose=True,
-																			  msg="Settings not saved, you are trying to save pin which is already used by others"))
-								return
+		if "gpio_mode" in data:
+			mode_to_save = int(data.get("gpio_mode"))
 
-						# BCM
-						elif mode_to_save is 11:
-							if pin_to_save > 27:
-								self._logger.info(
-									"You are trying to save pin %s which is out of range" % (pin_to_save))
-								self._plugin_manager.send_plugin_message(self._identifier,
-																		 dict(type="error", autoClose=True,
-																			  msg="Settings not saved, you are trying to save pin which is out of range"))
+		if pin_to_save is not None:
+			# check if pin is not power/ground pin or out of range but allow -1
+			if pin_to_save is not self.pin_num_disabled:
+				try:
+					# BOARD
+					if mode_to_save is 10:
+						# before saving check if pin not used by others
+						usage = GPIO.gpio_function(pin_to_save)
+						self._logger.debug("usage on pin %s is %s" % (pin_to_save, usage))
+						if usage is not 1:
+							UseOld = True
+							self._logger.info(
+								"You are trying to save pin %s which is already used by others" % (pin_to_save))
+							self._plugin_manager.send_plugin_message(self._identifier,
+																	 dict(type="error", autoClose=True,
+																		  msg="Filament sensor settings not saved, you are trying to use a pin which is already used by others"))
+							return
+					# BCM
+					elif mode_to_save is 11:
+						if pin_to_save > 27:
+							UseOld = True
+							self._logger.info(
+								"You are trying to save pin %s which is out of range" % (pin_to_save))
+							self._plugin_manager.send_plugin_message(self._identifier,
+																	 dict(type="error", autoClose=True,
+																		  msg="Filament sensor settings not saved, you are trying to use a pin which is out of range"))
+							return
 
-					except ValueError:
-						self._logger.info(
-							"You are trying to save pin %s which is ground/power pin or out of range" % (pin_to_save))
-						self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
-																						msg="Settings not saved, you are trying to save pin which is ground/power pin or out of range"))
-						return
+				except ValueError:
+					self._logger.info(
+						"You are trying to save pin %s which is ground/power pin or out of range" % (pin_to_save))
+					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
+																					msg="Filament sensor settings not saved, you are trying to use a pin which is ground/power pin or out of range"))
+					return
+
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
 	def checkM600Enabled(self):
