@@ -74,7 +74,6 @@ $(function () {
             var mode =  $('#filamentsensorsimplified_settings_gpioMode').val();
             var pin =  $('#filamentsensorsimplified_settings_pinInput').val();
             var sencon = $('#filamentsensorsimplified_settings_powerInput').val();
-            console.log(pin,mode, sencon);
             if (
                 sencon == 1 && (
                     (mode == 10 && (pin==3 || pin == 5))
