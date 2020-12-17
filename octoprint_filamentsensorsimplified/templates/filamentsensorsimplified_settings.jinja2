@@ -1,96 +1,79 @@
 <h3>{{ _('Filament Sensor Simplified') }}</h3>
-<form id="filamentsensorsimplified_settings" class="form-horizontal marginTop">
+<form id="filamentsensorsimplified_settings" class="form-horizontal">
+    <div class="alert alert-info" data-bind="visible: printing">
+        <i class="fas fa-hourglass-half iconRight"></i>
+        {{ _('All settings are disabled while printing') }}
+    </div>
 
     <div class="control-group">
-        <div class="marginBot">
-            <b>Select the board mode:</b>
-        </div>
-        <label class="control-label">{{ _('Board mode:') }}</label>
-        <div class="controls" data-toggle="tooltip"
-             title="{{ _('Board - referring to the pins by the number, BCM - referring to the pins by the "Broadcom SOC channel"') }}">
-            <select id="gpioMode" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode, disable:gpio_mode_disabled">
+        <label class="control-label" for="filamentsensorsimplified_settings_gpioMode">{{ _('Board mode') }}</label>
+        <div class="controls">
+            <select title="{{ _('Board - referring to the pins by the number, BCM - referring to the pins by the Broadcom SOC channel') }}" id="filamentsensorsimplified_settings_gpioMode" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.gpio_mode, disable:gpio_mode_disabled">
                 <option value=10>{{ _('Board mode') }}</option>
                 <option value=11>{{ _('BCM mode') }}</option>
             </select>
-        </div>
-        <div data-bind="visible: gpio_mode_disabled && !printing">
-            <p style="color: red; margin-left:180px; margin-top:10px; margin-bottom:-15px">Mode has been set by third party</p>
-        </div>
-    </div>
-
-    <div class="control-group">
-        <div class="marginBot">
-            <b>Which Raspberry Pi pin is your sensor output attached to? (-1 disables the plugin)</b>
-        </div>
-        <label class="control-label">{{ _('Pin number:') }}</label>
-        <div class="controls" data-toggle="tooltip">
-            <input id="pinInput" type="number" step="1" min="-1" max="40" class="input-mini text-right"
-                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin, disable:printing">
+            <div class="alert alert-info" data-bind="visible: gpio_mode_disabled && !printing">
+                <i class="fas fa-info iconRight"></i>
+                {{ _('Board mode has been set by third party/other plugin and is disabled') }}
+            </div>
         </div>
     </div>
 
     <div class="control-group">
-        <div class="marginBot">
-            <b>Which G-code will be sent to printer on filament runout?</b>
-        </div>
-        <label class="control-label">{{ _('Command to send:') }}</label>
-        <div class="controls" data-toggle="tooltip">
-            <input id="commandInput" type="text" class="input-large"
-                   data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
+        <label class="control-label" for="filamentsensorsimplified_settings_pinInput">{{ _('Pin number') }}</label>
+        <div class="controls">
+            <input id="filamentsensorsimplified_settings_pinInput" type="number" step="1" min="-1" max="40" class="input-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin, disable:printing">
+            <span class="help-block">Which Raspberry Pi pin is your sensor output attached to? (-1 disables the plugin) <a target="_blank" href="https://pinout.xyz/">Pinout help</a></span>
         </div>
     </div>
 
     <div class="control-group">
-        <div class="marginBot">
-            <b>Input terminal of the sensor (switch) needs to be connected to ground or 3.3 V</b>
-        </div>
-        <label class="control-label">{{ _('Sensor is connected to:') }}</label>
-        <div class="controls" data-toggle="tooltip"
-             title="{{ _('Specify how the sensor (switch) is connected. One end of the sensor must be wired to ground or 3.3 V. Sensor is triggered when open.') }}">
-            <select id="powerInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.power, disable:printing">
+        <label class="control-label" for="filamentsensorsimplified_settings_powerInput">{{ _('Sensor is connected to') }}</label>
+        <div class="controls">
+            <select id="filamentsensorsimplified_settings_powerInput" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.power, disable:printing">
                 <option value=0>{{ _('Ground') }}</option>
                 <option value=1>{{ _('3.3V') }}</option>
             </select>
+            <span class="help-block">Specify how the sensor (switch) is connected. One end of the sensor must be wired to ground or 3.3V. Sensor is triggered when open.</span>
         </div>
     </div>
 
     <div class="control-group">
-        <div class="marginBot">
-            <b>Select if the switch is triggered when open or closed:</b>
-        </div>
-        <label class="control-label">{{ _('Switch type:') }}</label>
-        <div class="controls" data-toggle="tooltip">
-            <select id="triggeredInput" class="select-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.triggered, disable:printing">
+        <label class="control-label">{{ _('Switch type') }}</label>
+        <div class="controls">
+            <select id="filamentsensorsimplified_settings_triggeredInput" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.triggered, disable:printing">
                 <option value=0>{{ _('Triggered when open') }}</option>
                 <option value=1>{{ _('Triggered when closed') }}</option>
             </select>
-        </div>
-
-        <div>
-            <table style="margin-left: 180px; margin-top: 20px">
-                <tr>
-                    <td>
-                        <input type="button" class="btn" data-bind="click: testSensor, disable:printing" value="Test sensor">
-                    </td>
-                    <td style="padding-left: 10px">
-                        <p id="sensor-test-result-text" data-bind="text: testSensorResult" style="display: inline;"></p>
-                    </td>
-                </tr>
-            </table>
-        </div>
-
-        <div class="alert-info wy-alert-warning marginTop">
-            <span class="icon-info-sign"></span>
-            <span class="octoFontFamily iconIndent">Pins 3 and 5 (Board mode) or pins 2 and 3 (BCM mode) have physical pull up resistor. If sensor is connected to 3.3 V this plugin won't work.</span>
-        </div>
-
-        <div class="alert-danger">
-            <span class="icon-warning-sign"></span>
-            <span class="octoFontFamily iconIndent">Warning! Never connect the sensor to 5V! 5V could destroy GPIO of your Raspberry Pi.</span>
-        </div>
-        <div style="font-size: 11px">
-            For more information click <a
-                href="https://github.com/LuckyX182/Filament_sensor_simplified">here</a>
+            <span class="help-block">Select if the switch is triggered when open or closed.</span>
         </div>
     </div>
+
+    <div class="control-group">
+        <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('Command to send') }}</label>
+        <div class="controls">
+            <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
+            <span class="help-block">Which G-code will be sent to printer on filament runout.</span>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <div class="controls text-center">
+            <strong id="filamentsensorsimplified_settings_testResult" data-bind="html: testSensorResult"></strong>
+            <input type="button" class="btn btn-info" data-bind="click: testSensor, disable:printing" value="Test sensor">
+        </div>
+    </div>
+
+    <div class="alert alert-info hidden" id="filamentsensorsimplified_settings_pullupwarn">
+        <i class="fas fa-info iconRight"></i>
+        Pins 3 and 5 (Board mode) or pins 2 and 3 (BCM mode) have physical pull up resistor. If sensor is connected to 3.3V this plugin won't work.
+    </div>
+
+    <div class="alert alert-error">
+        <i class="fas fa-exclamation iconRight"></i>
+        Warning! Never connect the sensor to 5V! 5V could destroy GPIO of your Raspberry Pi.
+    </div>
+
+    <p>For more information click <a target="_blank" href="https://github.com/LuckyX182/Filament_sensor_simplified">here</a></p>
+
 </form>
