@@ -27,6 +27,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# printing flag
 	printing = False
 
+	# detection active
+	detectionOn = False
+
 	def initialize(self):
 		GPIO.setwarnings(True)
 		# flag telling that we are expecting M603 response
@@ -315,12 +318,16 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 						# triggered when open
 						if self.triggered is 0:
+							self.turnOffDetection(event)
+							self.detectionOn = True
 							GPIO.add_event_detect(
 								self.pin, GPIO.RISING,
 								callback=self.sensor_callback,
 								bouncetime=self.bounce_time)
 						# triggered when closed
 						else:
+							self.turnOffDetection(event)
+							self.detectionOn = True
 							GPIO.add_event_detect(
 								self.pin, GPIO.FALLING,
 								callback=self.sensor_callback,
@@ -331,12 +338,16 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 						# triggered when open
 						if self.triggered is 0:
+							self.turnOffDetection(event)
+							self.detectionOn = True
 							GPIO.add_event_detect(
 								self.pin, GPIO.RISING,
 								callback=self.sensor_callback,
 								bouncetime=self.bounce_time)
 						# triggered when closed
 						else:
+							self.turnOffDetection(event)
+							self.detectionOn = True
 							GPIO.add_event_detect(
 								self.pin, GPIO.FALLING,
 								callback=self.sensor_callback,
@@ -366,12 +377,18 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					Events.PRINT_CANCELLED,
 					Events.ERROR
 			):
-				self._logger.info("%s: Disabling filament sensor." % (event))
-				GPIO.remove_event_detect(self.pin)
+				self.turnOffDetection(event)
 				self.changing_filament_initiated = False
 				self.changing_filament_started = False
 				self.paused_for_user = False
 				self.printing = False
+
+	# turn off detection if on
+	def turnOffDetection(self,event):
+		if self.detectionOn:
+			self._logger.info("%s: Disabling filament sensor." % (event))
+			self.detectionOn = False
+			GPIO.remove_event_detect(self.pin)
 
 	def sensor_callback(self, _):
 		trigger = True
