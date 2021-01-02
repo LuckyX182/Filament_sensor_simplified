@@ -45,15 +45,15 @@ $(function () {
                     statusCode: {
                         500: function () {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
-                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> OctoPrint experienced issue. Check octoprint.log for further info');
+                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> OctoPrint experienced a problem. Check octoprint.log for further info.');
                         },
                         555: function () {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
-                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> This pin is currently used by others, choose other pin');
+                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> This pin is already in use, choose other pin.');
                         },
                         556: function () {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
-                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> That is power, ground or out of range pin, choose other pin');
+                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> The pin selected is power, ground or out of range pin number, choose other pin');
                         }
                     },
                     error: function () {
@@ -73,13 +73,16 @@ $(function () {
             );
         }
         self.checkWarningPullUp = function(event){
+            // Which mode are we using
             var mode = parseInt($('#filamentsensorsimplified_settings_gpioMode').val(),10);
+            // What pin is the sensor connected to
             var pin = parseInt($('#filamentsensorsimplified_settings_pinInput').val(),10);
-            var sencon = parseInt($('#filamentsensorsimplified_settings_powerInput').val(),10);
+            // What is the sensor connected to - ground or 3.3v
+            var sensorCon = parseInt($('#filamentsensorsimplified_settings_powerInput').val(),10);
 
             // Show alerts
             if (
-                sencon == 1 && (
+                sensorCon == 1 && (
                     (mode == 10 && (pin==3 || pin == 5))
                     ||
                     (mode == 11 && (pin == 2 || pin == 3))
@@ -91,11 +94,11 @@ $(function () {
             }
 
             // Set max to right board type - 10 = Boardmode
-            var warnactive = false;
+            var showWarning = true;
             if (mode == 10){
                 $('#filamentsensorsimplified_settings_pinInput').attr('max',40);
                 if (pin != 0 && $.inArray(pin,self.validPinsBoard) == -1){
-                    warnactive = true;
+                    showWarning = false;
                     $('#filamentsensorsimplified_settings_badpin').removeClass('hidden pulsAlert').addClass('pulsAlert');
                 }else{
                     $('#filamentsensorsimplified_settings_badpin').addClass('hidden').removeClass('pulsAlert');
@@ -108,7 +111,8 @@ $(function () {
             if ($('#filamentsensorsimplified_settings_pinInput').attr('max') < pin || pin < 0){
                 $('#filamentsensorsimplified_settings_badpin').removeClass('hidden pulsAlert').addClass('pulsAlert');
             }else{
-                if (!warnactive){
+                // If the warning is not already shown then show it now
+                if (showWarning){
                     $('#filamentsensorsimplified_settings_badpin').addClass('hidden').removeClass('pulsAlert');
                 }
             }

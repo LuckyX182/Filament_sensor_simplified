@@ -151,7 +151,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 		# Fix old -1 settings to 0
 		if self.pin is -1:
-			self._logger.info("Fixing old settings from -1 t0 0")
+			self._logger.info("Fixing old settings from -1 to 0")
 			self._settings.set(["pin"], 0)
 			self.pin = 0
 		if gpio_mode is not None:
@@ -168,7 +168,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._logger.info("Mode is %s" % (gpio_mode))
 
 	def on_settings_save(self, data):
-		# get non changed settngs to do the validation if only one of these is changed
+		# Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
 		pin_to_save = self._settings.get_int(["pin"])
 		mode_to_save = self._settings.get_int(["gpio_mode"])
 
@@ -179,7 +179,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			mode_to_save = int(data.get("gpio_mode"))
 
 		if pin_to_save is not None:
-			# check if pin is not power/ground pin or out of range but allow -1
+			# check if pin is not power/ground pin or out of range but allow the disabled value (0)
 			if pin_to_save is not self.pin_num_disabled:
 				try:
 					# BOARD
