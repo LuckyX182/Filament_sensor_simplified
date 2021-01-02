@@ -1,7 +1,7 @@
 <h3>{{ _('Filament Sensor Simplified') }}</h3>
 <form id="filamentsensorsimplified_settings" class="form-horizontal">
     <div class="alert alert-info" data-bind="visible: printing">
-        <i class="fas fa-hourglass-half iconRight"></i>
+        <i class="fas icon-lock fa-hourglass-half  iconRight"></i>
         {{ _('All settings are disabled while printing') }}
     </div>
 
@@ -13,7 +13,7 @@
                 <option value=11>{{ _('GPIO/BCM mode') }}</option>
             </select>
             <div class="alert alert-info" data-bind="visible: gpio_mode_disabled">
-                <i class="fas fa-info iconRight"></i>
+                <i class="fas fa-info icon-info-sign iconRight"></i>
                 {{ _('Board mode has been set by third party/other plugin and is disabled') }}
             </div>
         </div>
@@ -25,7 +25,7 @@
             <input id="filamentsensorsimplified_settings_pinInput" type="number" step="1" min="0" max="40" class="input-mini" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.pin, disable:printing" required>
             <span class="help-block">Which Raspberry Pi pin is your sensor output attached to? (0 disables the plugin) <a target="_blank" href="https://pinout.xyz/">Pinout help</a></span>
             <div class="alert alert-error hidden" id="filamentsensorsimplified_settings_badpin">
-                <i class="fas fa-info iconRight"></i>
+                <i class="fas fa-info icon-info-sign iconRight"></i>
                 {{ _('Warning: The selected pin is not a standard "data" pin.') }}
             </div>
         </div>
@@ -69,12 +69,12 @@
     </div>
 
     <div class="alert alert-info hidden" id="filamentsensorsimplified_settings_pullupwarn">
-        <i class="fas fa-info iconRight"></i>
+        <i class="fas fa-info icon-info-sign iconRight"></i>
         Pins 3 and 5 (Board mode) or pins 2 and 3 (BCM mode) have physical pull up resistor. If sensor is connected to 3.3V this plugin won't work.
     </div>
     <br>
     <div class="alert alert-error">
-        <i class="fas fa-exclamation iconRight"></i>
+        <i class="fas fa-exclamation icon-warning-sign iconRight"></i>
         Warning! Never connect the sensor to 5V! 5V could destroy GPIO of your Raspberry Pi.
     </div>
 

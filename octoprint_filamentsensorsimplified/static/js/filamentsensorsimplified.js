@@ -45,28 +45,28 @@ $(function () {
                     statusCode: {
                         500: function () {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
-                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> OctoPrint experienced a problem. Check octoprint.log for further info.');
+                            self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> OctoPrint experienced a problem. Check octoprint.log for further info.');
                         },
                         555: function () {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
-                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> This pin is already in use, choose other pin.');
+                            self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> This pin is already in use, choose other pin.');
                         },
                         556: function () {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
-                            self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> The pin selected is power, ground or out of range pin number, choose other pin');
+                            self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> The pin selected is power, ground or out of range pin number, choose other pin');
                         }
                     },
                     error: function () {
                         $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
-                        self.testSensorResult('<i class="fas fa-exclamation-triangle"></i> There was an error :(');
+                        self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> There was an error :(');
                     },
                     success: function (result) {
                         if (result.triggered === true) {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
-                            self.testSensorResult('<i class="fas fa-toggle-on"></i> Sensor detected filament!');
+                            self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
                         } else {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
-                            self.testSensorResult('<i class="fas fa-toggle-off"></i> Sensor triggered!')
+                            self.testSensorResult('<i class="fas icon-plus fa-toggle-off"></i> Sensor triggered!')
                         }
                     }
                 }
