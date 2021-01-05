@@ -37,7 +37,7 @@ by the "Broadcom SOC channel", if this is selected by 3rd party, this option wil
 5. **switch type** - switch should be **triggered when opened** (input of the sensor doesn't transfer to its output) or **triggered
 when closed** (input of the sensor is transferred to its output)
 
-Default pin is -1 (not configured) and ground (as it is safer, read below).
+Default pin is 0 (not configured) and ground (as it is safer, read below).
 
 **WARNING! Never connect the switch input to 5V as it could fry the GPIO section of your Raspberry!**
 

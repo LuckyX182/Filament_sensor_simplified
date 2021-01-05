@@ -1,6 +1,8 @@
 $(function () {
     function filamentsensorsimplifiedViewModel(parameters) {
         var self = this;
+
+        self.validPinsBoard = [3,5,7,11,13,15,19,21,23,27,29,31,33,35,37,8,10,12,16,18,22,24,26,28,32,36,38,40];
         self.settingsViewModel = parameters[0];
         self.testSensorResult = ko.observable(null);
         self.gpio_mode_disabled = ko.observable(false);
@@ -24,6 +26,9 @@ $(function () {
         }
 
         self.testSensor = function () {
+            // Cleanup
+            $("#filamentsensorsimplified_settings_testResult").removeClass("text-warning text-error text-info text-success");
+            // Make api callback
             $.ajax({
                     url: "/api/plugin/filamentsensorsimplified",
                     type: "post",
@@ -32,51 +37,93 @@ $(function () {
                     headers: {"X-Api-Key": UI_API_KEY},
                     data: JSON.stringify({
                         "command": "testSensor",
-                        "pin": $("#pinInput").val(),
-                        "power": $("#powerInput").val(),
-                        "mode": $("#gpioMode").val(),
-                        "triggered": $("#triggeredInput").val()
+                        "pin": $("#filamentsensorsimplified_settings_pinInput").val(),
+                        "power": $("#filamentsensorsimplified_settings_powerInput").val(),
+                        "mode": $("#filamentsensorsimplified_settings_gpioMode").val(),
+                        "triggered": $("#filamentsensorsimplified_settings_triggeredInput").val()
                     }),
                     statusCode: {
                         500: function () {
-                            $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("OctoPrint experienced issue. Check octoprint.log for further info");
+                            $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
+                            self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> OctoPrint experienced a problem. Check octoprint.log for further info.');
                         },
                         555: function () {
-                            $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("This pin is currently used by others, choose other pin");
+                            $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
+                            self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> This pin is already in use, choose other pin.');
                         },
                         556: function () {
-                            $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("That is power, ground or out of range pin, choose other pin");
+                            $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
+                            self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> The pin selected is power, ground or out of range pin number, choose other pin');
                         }
                     },
                     error: function () {
-                        $("#sensor-test-result-text").css("color", "red");
-                        self.testSensorResult("There was an error :(");
+                        $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
+                        self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> There was an error :(');
                     },
                     success: function (result) {
                         if (result.triggered === true) {
-                            $("#sensor-test-result-text").css("color", "green");
-                            self.testSensorResult("Sensor detected filament!");
+                            $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
+                            self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
                         } else {
-                            $("#sensor-test-result-text").css("color", "red");
-                            self.testSensorResult("Sensor triggered!")
+                            $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
+                            self.testSensorResult('<i class="fas icon-plus fa-toggle-off"></i> Sensor triggered!')
                         }
                     }
                 }
             );
         }
+        self.checkWarningPullUp = function(event){
+            // Which mode are we using
+            var mode = parseInt($('#filamentsensorsimplified_settings_gpioMode').val(),10);
+            // What pin is the sensor connected to
+            var pin = parseInt($('#filamentsensorsimplified_settings_pinInput').val(),10);
+            // What is the sensor connected to - ground or 3.3v
+            var sensorCon = parseInt($('#filamentsensorsimplified_settings_powerInput').val(),10);
 
-        getDisabled = function (item) {
+            // Show alerts
+            if (
+                sensorCon == 1 && (
+                    (mode == 10 && (pin==3 || pin == 5))
+                    ||
+                    (mode == 11 && (pin == 2 || pin == 3))
+                )
+            ){
+                $('#filamentsensorsimplified_settings_pullupwarn').removeClass('hidden pulsAlert').addClass('pulsAlert');
+            }else{
+                $('#filamentsensorsimplified_settings_pullupwarn').addClass('hidden').removeClass('pulsAlert');
+            }
+
+            // Set max to right board type - 10 = Boardmode
+            var showWarning = true;
+            if (mode == 10){
+                $('#filamentsensorsimplified_settings_pinInput').attr('max',40);
+                if (pin != 0 && $.inArray(pin,self.validPinsBoard) == -1){
+                    showWarning = false;
+                    $('#filamentsensorsimplified_settings_badpin').removeClass('hidden pulsAlert').addClass('pulsAlert');
+                }else{
+                    $('#filamentsensorsimplified_settings_badpin').addClass('hidden').removeClass('pulsAlert');
+                }
+            }else{
+                $('#filamentsensorsimplified_settings_pinInput').attr('max',27);
+            }
+
+            // High or low
+            if ($('#filamentsensorsimplified_settings_pinInput').attr('max') < pin || pin < 0){
+                $('#filamentsensorsimplified_settings_badpin').removeClass('hidden pulsAlert').addClass('pulsAlert');
+            }else{
+                // If the warning is not already shown then show it now
+                if (showWarning){
+                    $('#filamentsensorsimplified_settings_badpin').addClass('hidden').removeClass('pulsAlert');
+                }
+            }
+        }
+
+        self.getDisabled = function (item) {
             $.ajax({
                 type: "GET",
                 dataType: "json",
                 url: "plugin/filamentsensorsimplified/disable",
                 success: function (result) {
-                    console.log("success");
-                    console.log(result.gpio_mode_disabled);
-                    console.log(result.printing);
                     self.gpio_mode_disabled(result.gpio_mode_disabled)
                     self.printing(result.printing)
                 }
@@ -85,7 +132,10 @@ $(function () {
 
         self.onSettingsShown = function () {
             self.testSensorResult("");
-            getDisabled();
+            self.getDisabled();
+             // Check for broken settings
+            $('#filamentsensorsimplified_settings_gpioMode, #filamentsensorsimplified_settings_pinInput, #filamentsensorsimplified_settings_powerInput').off('change.fsensor').on('change.fsensor',self.checkWarningPullUp);
+            $('#filamentsensorsimplified_settings_gpioMode').trigger('change.fsensor');
         }
     }
 
