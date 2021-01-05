@@ -14,11 +14,11 @@ plugin_package = "octoprint_filamentsensorsimplified"
 plugin_name = "Filament sensor simplified"
 
 # The plugin's version. Can be overwritten within OctoPrint's internal data via __plugin_version__ in the plugin module
-plugin_version = "0.1.0"
+plugin_version = "0.2.1"
 
 # The plugin's description. Can be overwritten within OctoPrint's internal data via __plugin_description__ in the plugin
 # module
-plugin_description = """Simple plugin reacting to filament sensor, issuing M600 (filament change) command to printer"""
+plugin_description = """Simple plugin reacting to filament sensor, issuing filament change gcode to printer on filament runout"""
 
 # The plugin's author. Can be overwritten within OctoPrint's internal data via __plugin_author__ in the plugin module
 plugin_author = "Lukáš Malatinský"

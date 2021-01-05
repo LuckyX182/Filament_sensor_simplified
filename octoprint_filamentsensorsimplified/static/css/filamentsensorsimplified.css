@@ -1,15 +1,20 @@
-.marginBot{
-    margin-bottom: 10px;
+#filamentsensorsimplified_settings .iconRight{
+	margin-right: -25px;
+	margin-top: 3px;
+	float: right;
 }
 
-.marginTop{
-    margin-top: 20px;
+#filamentsensorsimplified_settings div.controls div.alert{
+	margin-bottom: 0px;
+	margin-top: 5px;
 }
 
-.octoFontFamily{
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+#filamentsensorsimplified_settings .pulsAlert{
+	animation: pulsate 1s ease-out;
+    animation-iteration-count: 1;
 }
 
-.iconIndent{
-    margin-left: 10px;
+#filamentsensorsimplified_settings_testResult{
+	display: block;
+	margin-bottom: 10px;
 }
