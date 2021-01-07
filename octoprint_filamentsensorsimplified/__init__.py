@@ -141,7 +141,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			triggered_bool = (pin_value + selected_power + triggered) % 2 is 0
 			self._logger.debug("triggered value %s" % triggered_bool)
 			return flask.jsonify(triggered=triggered_bool)
-		except ValueError:
+		except ValueError as e:
+			self._logger.error(str(e))
 			# ValueError occurs when reading from power, ground or out of range pins
 			return "", 556
 
@@ -159,10 +160,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self.gpio_mode_disabled = True
 		else:
 			if self.gpio_mode is 10:
-				GPIO.cleanup()
 				GPIO.setmode(GPIO.BOARD)
 			elif self.gpio_mode is 11:
-				GPIO.cleanup()
 				GPIO.setmode(GPIO.BCM)
 			self.gpio_mode_disabled = False
 		self._logger.info("Mode is %s" % (gpio_mode))
