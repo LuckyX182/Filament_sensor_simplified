@@ -61,12 +61,24 @@ $(function () {
                         self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> There was an error :(');
                     },
                     success: function (result) {
-                        if (result.triggered === true) {
-                            $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
-                            self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
+                        // triggered when open
+                        if ($("#filamentsensorsimplified_settings_triggeredInput").val() === 0) {
+                            if (result.triggered === false) {
+                                $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
+                                self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
+                            } else {
+                                $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
+                                self.testSensorResult('<i class="fas icon-plus fa-toggle-off"></i> Sensor triggered!')
+                            }
+                        // triggered when closed
                         } else {
-                            $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
-                            self.testSensorResult('<i class="fas icon-plus fa-toggle-off"></i> Sensor triggered!')
+                            if (result.triggered === true) {
+                                $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
+                                self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor triggered!');
+                            } else {
+                                $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
+                                self.testSensorResult('<i class="fas icon-plus fa-toggle-off"></i> Sensor detected filament or not working!')
+                            }
                         }
                     }
                 }
