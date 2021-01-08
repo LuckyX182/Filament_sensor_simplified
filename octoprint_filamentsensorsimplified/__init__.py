@@ -117,8 +117,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 			# BOARD
 			if mode is 10:
-				GPIO.cleanup()
-				GPIO.setmode(GPIO.BOARD)
+				# if mode set by 3rd party don't set it again
+				if not self.gpio_mode_disabled:
+					GPIO.cleanup()
+					GPIO.setmode(GPIO.BOARD)
 				# first check pins not in use already
 				usage = GPIO.gpio_function(selected_pin)
 				self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
@@ -131,8 +133,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				# BCM range 1-27
 				if selected_pin > 27:
 					return "", 556
-				GPIO.cleanup()
-				GPIO.setmode(GPIO.BCM)
+				# if mode set by 3rd party don't set it again
+				if not self.gpio_mode_disabled:
+					GPIO.cleanup()
+					GPIO.setmode(GPIO.BCM)
 
 			# before read don't let the pin float
 			self._logger.debug("selected power is %s" % selected_power)
@@ -140,10 +144,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 			else:
 				GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
 			pin_value = GPIO.input(selected_pin)
 			self._logger.debug("pin value is %s" % pin_value)
+
 			# reset input to pull down after read
-			GPIO.cleanup(selected_pin)
+			GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
 			triggered_bool = (pin_value + selected_power + triggered) % 2 is 0
 			self._logger.debug("triggered value %s" % triggered_bool)
 			return flask.jsonify(triggered=triggered_bool)
