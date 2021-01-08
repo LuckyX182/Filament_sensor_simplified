@@ -63,7 +63,7 @@ $(function () {
                     success: function (result) {
                         // triggered when open
                         if ($("#filamentsensorsimplified_settings_triggeredInput").val() === "0") {
-                            if (result.triggered === false) {
+                            if (result.triggered === true) {
                                 $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
                                 self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
                             } else {
