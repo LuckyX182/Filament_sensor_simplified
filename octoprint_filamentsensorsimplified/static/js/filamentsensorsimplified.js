@@ -68,7 +68,7 @@ $(function () {
                                 self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
                             } else {
                                 $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
-                                self.testSensorResult('<i class="fas icon-plus fa-toggle-off"></i> Sensor triggered!')
+                                self.testSensorResult('<i class="icon-stop"></i> Sensor triggered!')
                             }
                         // triggered when closed
                         } else {
@@ -77,7 +77,7 @@ $(function () {
                                 self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor triggered!');
                             } else {
                                 $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
-                                self.testSensorResult('<i class="fas icon-plus fa-toggle-off"></i> Sensor detected filament or not working!')
+                                self.testSensorResult('<i class="icon-stop"></i> Sensor detected filament or not working!')
                             }
                         }
                     }
