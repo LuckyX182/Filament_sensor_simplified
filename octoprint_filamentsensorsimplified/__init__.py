@@ -18,12 +18,16 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 									   octoprint.plugin.AssetPlugin):
 	# bounce time for sensing
 	bounce_time = 250
+
 	# pin number used as plugin disabled
 	pin_num_disabled = 0
+
 	# default gcode
 	default_gcode = 'M600 X0 Y0'
+
 	# gpio mode disabled
 	gpio_mode_disabled = False
+
 	# printing flag
 	printing = False
 
@@ -39,13 +43,15 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		# flag defining that the filament change command has been sent to printer, this does not however mean that
 		# filament change sequence has been started
 		self.changing_filament_initiated = False
-		# flag defining that the filament change sequence has been started
-		self.changing_filament_started = False
+		# flag defining that the filament change sequence has been started and the M600 command has been se to printer
+		self.changing_filament_command_sent = False
 		# flag defining that the filament change sequence has been started and the printer is waiting for user
 		# to put in new filament
 		self.paused_for_user = False
 		# flag for determining if the gcode starts with M600
 		self.M600_gcode = True
+		# flag to prevent double detection
+		self.changing_filament_started = False
 
 	@property
 	def gpio_mode(self):
@@ -222,25 +228,27 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# this method is called before the gcode is sent to printer
 	def sending_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
 		if self.changing_filament_initiated and self.M600_supported:
-			if self.changing_filament_started:
+			if self.changing_filament_command_sent and self.changing_filament_started:
 				# M113 - host keepalive message, ignore this message
 				if not re.search("^M113", cmd):
 					self.changing_filament_initiated = False
+					self.changing_filament_command_sent = False
 					self.changing_filament_started = False
 					if self.no_filament():
 						self.send_out_of_filament()
 			if cmd == self.g_code:
-				self.changing_filament_started = True
+				self.changing_filament_command_sent = True
 
 	# this method is called on gcode response
 	def gcode_response_received(self, comm, line, *args, **kwargs):
-		if self.changing_filament_started:
+		if self.changing_filament_command_sent:
 			if re.search("busy: paused for user", line):
 				self._logger.debug("received busy paused for user")
 				if not self.paused_for_user:
 					self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False,
 																					msg="Filament change: printer is waiting for user input."))
 					self.paused_for_user = True
+					self.changing_filament_started = True
 			elif re.search("echo:busy: processing", line):
 				self._logger.debug("received busy processing")
 				if self.paused_for_user:
@@ -286,12 +294,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 		# if user has logged in show appropriate popup
 		elif event is Events.CLIENT_OPENED:
-			if self.changing_filament_initiated and not self.changing_filament_started:
+			if self.changing_filament_initiated and not self.changing_filament_command_sent:
 				self.show_printer_runout_popup()
-			elif self.changing_filament_started and not self.paused_for_user:
+			elif self.changing_filament_command_sent and not self.paused_for_user:
 				self.show_printer_runout_popup()
 			# printer is waiting for user to put in new filament
-			elif self.changing_filament_started and self.paused_for_user:
+			elif self.changing_filament_command_sent and self.paused_for_user:
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False,
 																				msg="Printer ran out of filament! It's waiting for user input"))
 			# if the plugin hasn't been initialized
@@ -378,7 +386,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			):
 				self.turnOffDetection(event)
 				self.changing_filament_initiated = False
-				self.changing_filament_started = False
+				self.changing_filament_command_sent = False
 				self.paused_for_user = False
 				self.printing = False
 
