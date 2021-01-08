@@ -15,6 +15,7 @@ Let's check some features:
 * user-friendly and easy to configure
 * pin validation so you don't accidentally save wrong pin number
 * detection of used GPIO mode - this makes it compatible with other plugins
+* handles delibrate M600 filament change
 * runs on OctoPrint 1.3.0 and higher
 
 **NOTE: this plugin won't work if you use OctoPrint only to start printing from SD card**
