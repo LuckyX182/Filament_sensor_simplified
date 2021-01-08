@@ -200,7 +200,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 						usage = GPIO.gpio_function(pin_to_save)
 						self._logger.debug("usage on pin %s is %s" % (pin_to_save, usage))
 						if usage is not 1:
-							UseOld = True
 							self._logger.info(
 								"You are trying to save pin %s which is already used by others" % (pin_to_save))
 							self._plugin_manager.send_plugin_message(self._identifier,
@@ -210,7 +209,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					# BCM
 					elif mode_to_save is 11:
 						if pin_to_save > 27:
-							UseOld = True
 							self._logger.info(
 								"You are trying to save pin %s which is out of range" % (pin_to_save))
 							self._plugin_manager.send_plugin_message(self._identifier,
@@ -245,6 +243,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 						self.send_out_of_filament()
 			if cmd == self.g_code:
 				self.changing_filament_command_sent = True
+
+		# deliberate change
+		if self.M600_supported and re.search("^M600", cmd):
+			self.changing_filament_initiated = True
+			self.changing_filament_command_sent = True
 
 	# this method is called on gcode response
 	def gcode_response_received(self, comm, line, *args, **kwargs):
