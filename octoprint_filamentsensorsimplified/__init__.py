@@ -251,9 +251,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# this method is called on gcode response
 	def gcode_response_received(self, comm, line, *args, **kwargs):
-		# vvv mds added vvv
-		self._logger.info("gcode response: {}".format(line))
-		# ^^^ mds added ^^^
 		if self.changing_filament_command_sent:
 			if re.search("busy: paused for user", line):
 				self._logger.debug("received busy paused for user")
@@ -383,11 +380,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					# print started
 					else:
 						self.printing = True
-					# vvv mds added vvv
 					self.changing_filament_initiated = False
 					self.changing_filament_command_sent = False
 					self.paused_for_user = False
-					# ^^^ mds added ^^^
 
 				# print started without plugin configuration
 				else:
