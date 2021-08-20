@@ -430,7 +430,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def send_out_of_filament(self):
 		self.show_printer_runout_popup()
-		if self.cmd_action == "gcode":
+		cmd_action = self._settings.get(["cmd_action"])
+		if cmd_action == "gcode":
 			self._logger.info("Sending out of filament GCODE: %s" % (self.g_code))
 			self._printer.commands(self.g_code)
 		else:
