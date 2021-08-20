@@ -34,6 +34,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# detection active
 	detectionOn = False
 
+	# has the GPIO been activated
+	gpio_activated = False
+
 	def initialize(self):
 		GPIO.setwarnings(True)
 		# flag telling that we are expecting M603 response
@@ -88,7 +91,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			pin=self.pin_num_disabled,  # Default is -1
 			power=0,
 			g_code=self.default_gcode,
-			triggered=0
+			triggered=0,
+			cmd_action="gcode"
 		)
 
 	# simpleApiPlugin
@@ -119,8 +123,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			if mode is 10:
 				# if mode set by 3rd party don't set it again
 				if not self.gpio_mode_disabled:
-					GPIO.cleanup()
+					if self.gpio_activated:
+						GPIO.cleanup()
 					GPIO.setmode(GPIO.BOARD)
+					self.gpio_activated = True
+
 				# first check pins not in use already
 				usage = GPIO.gpio_function(selected_pin)
 				self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
@@ -135,8 +142,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					return "", 556
 				# if mode set by 3rd party don't set it again
 				if not self.gpio_mode_disabled:
-					GPIO.cleanup()
+					if self.gpio_activated:
+						GPIO.cleanup()
 					GPIO.setmode(GPIO.BCM)
+					self.gpio_activated = True
 
 			# before read don't let the pin float
 			self._logger.debug("selected power is %s" % selected_power)
@@ -421,8 +430,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def send_out_of_filament(self):
 		self.show_printer_runout_popup()
-		self._logger.info("Sending out of filament GCODE: %s" % (self.g_code))
-		self._printer.commands(self.g_code)
+		if self.cmd_action == "gcode":
+			self._logger.info("Sending out of filament GCODE: %s" % (self.g_code))
+			self._printer.commands(self.g_code)
+		else:
+			self._logger.info("Pausing print using OctoPrint native pause")
+			self._printer.pause_print()
 		self.changing_filament_initiated = True
 
 	def show_printer_runout_popup(self):
