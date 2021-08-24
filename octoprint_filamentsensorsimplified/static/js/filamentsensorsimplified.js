@@ -16,6 +16,18 @@ $(function () {
                 return;
             }
 
+            // Update icon
+            if (data.type == "iconStatus"){
+                if (data.noFilament){
+                    $('#navbar_plugin_filamentsensorsimplified i').replaceWith('<i class="text-error fas fa-dot-circle"></i>');
+                    $('#navbar_plugin_filamentsensorsimplified a').attr('title','Filament NOT detected');
+                }else{
+                    $('#navbar_plugin_filamentsensorsimplified i').replaceWith('<i class="text-success fas fa-circle"></i>');
+                    $('#navbar_plugin_filamentsensorsimplified a').attr('title','Filament detected');
+                }
+                return;
+            }
+
             new PNotify({
                 title: 'Filament sensor simplified',
                 text: data.msg,
