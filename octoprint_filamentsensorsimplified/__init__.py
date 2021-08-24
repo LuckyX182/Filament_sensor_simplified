@@ -5,6 +5,7 @@ import octoprint.plugin
 import re
 from octoprint.events import Events
 from time import sleep
+import time
 import RPi.GPIO as GPIO
 import flask
 
@@ -16,6 +17,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 									   octoprint.plugin.SimpleApiPlugin,
 									   octoprint.plugin.BlueprintPlugin,
 									   octoprint.plugin.AssetPlugin):
+
+	# last UI poll status
+	ui_status = 0
+	last_status = None
+	loaded = False
+
 	# bounce time for sensing
 	bounce_time = 250
 
@@ -97,7 +104,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# simpleApiPlugin
 	def get_api_commands(self):
-		return dict(testSensor=["pin", "power"])
+		return dict(testSensor=["pin", "power"],pollStatus=[],)
 
 	@octoprint.plugin.BlueprintPlugin.route("/disable", methods=["GET"])
 	def get_disable(self):
@@ -113,6 +120,18 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# test pin value, power pin or if its used by someone else
 	def on_api_command(self, command, data):
+		if command == "pollStatus":
+			if self.loaded == False:
+				return "Not started", 404
+
+			# only poll every 60 seconds and if auto detection is not running
+			timenow = int(time.time())
+			if self.detectionOn == False and (timenow - self.ui_status) >= 60:
+				if self.setupGPIO():
+					self.no_filament()
+			self._logger.info(self.last_status)
+			return flask.jsonify({'status' : self.last_status})
+
 		try:
 			selected_power = int(data.get("power"))
 			selected_pin = int(data.get("pin"))
@@ -191,6 +210,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		# get current status
 		if self.setupGPIO():
 			self.no_filament()
+
+		# ready
+		self.loaded = True
 
 	def on_settings_save(self, data):
 		# Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
@@ -301,6 +323,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# read sensor input value
 	def no_filament(self):
 		filaStatus = (GPIO.input(self.pin) + self.power + self.triggered) % 2 is not 0
+		self.ui_status = int(time.time())
+		self.last_status = filaStatus;
+
 		self._plugin_manager.send_plugin_message(self._identifier, dict(type="iconStatus", noFilament=filaStatus))
 		return filaStatus
 

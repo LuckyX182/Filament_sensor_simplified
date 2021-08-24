@@ -11,6 +11,32 @@ $(function () {
             return this.gpio_mode_disabled() && !this.printing();
         }, this);
 
+        self.onAllBound = function(){
+            // First run
+            OctoPrint.simpleApiCommand("filamentsensorsimplified", "pollStatus", {}).done(function(response) {
+                if ('status' in response){
+                    self.updateIconStatus(response.status);
+                }
+            });
+            setInterval(function(){
+                OctoPrint.simpleApiCommand("filamentsensorsimplified", "pollStatus", {}).done(function(response) {
+                    if ('status' in response){
+                        self.updateIconStatus(response.status);
+                    }
+                });
+            }, 50000);
+        }
+
+        self.updateIconStatus = function(noFilament){
+            if (noFilament){
+                $('#navbar_plugin_filamentsensorsimplified i').replaceWith('<i class="text-error fas fa-dot-circle"></i>');
+                $('#navbar_plugin_filamentsensorsimplified a').attr('title','Filament NOT detected');
+            }else{
+                $('#navbar_plugin_filamentsensorsimplified i').replaceWith('<i class="text-success fas fa-circle"></i>');
+                $('#navbar_plugin_filamentsensorsimplified a').attr('title','Filament detected');
+            }
+        }
+
         self.onDataUpdaterPluginMessage = function (plugin, data) {
             if (plugin !== "filamentsensorsimplified") {
                 return;
@@ -18,13 +44,7 @@ $(function () {
 
             // Update icon
             if (data.type == "iconStatus"){
-                if (data.noFilament){
-                    $('#navbar_plugin_filamentsensorsimplified i').replaceWith('<i class="text-error fas fa-dot-circle"></i>');
-                    $('#navbar_plugin_filamentsensorsimplified a').attr('title','Filament NOT detected');
-                }else{
-                    $('#navbar_plugin_filamentsensorsimplified i').replaceWith('<i class="text-success fas fa-circle"></i>');
-                    $('#navbar_plugin_filamentsensorsimplified a').attr('title','Filament detected');
-                }
+                self.updateIconStatus(data.noFilament);
                 return;
             }
 
