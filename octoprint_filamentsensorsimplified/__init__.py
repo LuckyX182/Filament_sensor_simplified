@@ -308,8 +308,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._logger.debug("Printer doesn't support M600")
 				self.M600_supported = False
 				self.checking_M600 = False
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
-																				msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
+				self._settings.set(["cmd_action"], "opnative")
 			else:
 				self._logger.debug("M600 check unsuccessful, trying again")
 				self.checkM600Enabled()
