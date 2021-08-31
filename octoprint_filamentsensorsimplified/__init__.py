@@ -129,7 +129,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			if self.detectionOn == False and (timenow - self.ui_status) >= 60:
 				if self.setupGPIO():
 					self.no_filament()
-			self._logger.info(self.last_status)
 			return flask.jsonify({'status' : self.last_status})
 
 		try:
