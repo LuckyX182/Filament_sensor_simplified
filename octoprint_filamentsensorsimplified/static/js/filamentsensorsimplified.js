@@ -24,7 +24,7 @@ $(function () {
                         self.updateIconStatus(response.status);
                     }
                 });
-            }, 50000);
+            }, 65000);
         }
 
         self.updateIconStatus = function(noFilament){
