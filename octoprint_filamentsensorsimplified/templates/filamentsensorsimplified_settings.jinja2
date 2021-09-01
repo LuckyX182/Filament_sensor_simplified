@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <h3>{{ _('Filament out action') }}</h3>
+    <h3>{{ _('Filament run out action') }}</h3>
     <div class="control-group">
         <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('Action') }}</label>
         <div class="controls">
@@ -64,7 +64,6 @@
                 <option value="gcode">{{ _('Send G-code') }}</option>
                 <option value="opnative">{{ _('OctoPrint pause') }}</option>
             </select>
-            <span class="help-block">When filament out is detected shall we send G-code to the printer or use OctoPrints pause function.</span>
         </div>
         <div class="controls" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 'gcode'">
             <br/>
@@ -77,7 +76,7 @@
     <div class="control-group">
         <div class="controls">
             <input type="button" class="btn btn-info" data-bind="click: testSensor, disable:printing" value="Test sensor">
-            <strong id="filamentsensorsimplified_settings_testResult" data-bind="html: testSensorResult"></strong>
+            <div id="filamentsensorsimplified_settings_testResult" class="hide alert" data-bind="html: testSensorResult"></div>
         </div>
     </div>
 
