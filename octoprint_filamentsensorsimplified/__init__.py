@@ -380,6 +380,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					# print started
 					else:
 						self.printing = True
+					self.changing_filament_initiated = False
+					self.changing_filament_command_sent = False
+					self.paused_for_user = False
 
 				# print started without plugin configuration
 				else:
