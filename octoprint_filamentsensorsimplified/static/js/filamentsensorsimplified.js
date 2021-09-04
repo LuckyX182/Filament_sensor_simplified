@@ -11,8 +11,38 @@ $(function () {
             return this.gpio_mode_disabled() && !this.printing();
         }, this);
 
+        self.onAllBound = function(){
+            // First run
+            OctoPrint.simpleApiCommand("filamentsensorsimplified", "pollStatus", {}).done(function(response) {
+                if ('status' in response){
+                    self.updateIconStatus(response.status);
+                }
+            });
+            setInterval(function(){
+                OctoPrint.simpleApiCommand("filamentsensorsimplified", "pollStatus", {}).done(function(response) {
+                    if ('status' in response){
+                        self.updateIconStatus(response.status);
+                    }
+                });
+            }, 65000);
+        }
+
+        self.updateIconStatus = function(noFilament){
+            if (noFilament){
+                $('#navbar_plugin_filamentsensorsimplified a').html('<span class="fa-stack fa-1x"><i class="fas fa-life-ring fa-stack-1x"></i><i class="fas fa-ban fa-stack-2x text-error"></i></span>').attr('title','Filament NOT detected');
+            }else{
+                $('#navbar_plugin_filamentsensorsimplified a').html('<i class="fas fa-life-ring fa-lg"></i>').attr('title','Filament detected');
+            }
+        }
+
         self.onDataUpdaterPluginMessage = function (plugin, data) {
             if (plugin !== "filamentsensorsimplified") {
+                return;
+            }
+
+            // Update icon
+            if (data.type == "iconStatus"){
+                self.updateIconStatus(data.noFilament);
                 return;
             }
 
@@ -27,7 +57,7 @@ $(function () {
 
         self.testSensor = function () {
             // Cleanup
-            $("#filamentsensorsimplified_settings_testResult").removeClass("text-warning text-error text-info text-success");
+            $("#filamentsensorsimplified_settings_testResult").hide().removeClass("hide alert-warning alert-error alert-info alert-success");
             // Make api callback
             $.ajax({
                     url: "/api/plugin/filamentsensorsimplified",
@@ -44,45 +74,47 @@ $(function () {
                     }),
                     statusCode: {
                         500: function () {
-                            $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
+                            $("#filamentsensorsimplified_settings_testResult").addClass("alert-error");
                             self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> OctoPrint experienced a problem. Check octoprint.log for further info.');
                         },
                         555: function () {
-                            $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
+                            $("#filamentsensorsimplified_settings_testResult").addClass("alert-error");
                             self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> This pin is already in use, choose other pin.');
                         },
                         556: function () {
-                            $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
+                            $("#filamentsensorsimplified_settings_testResult").addClass("alert-error");
                             self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> The pin selected is power, ground or out of range pin number, choose other pin');
                         }
                     },
                     error: function () {
-                        $("#filamentsensorsimplified_settings_testResult").addClass("text-error");
+                        $("#filamentsensorsimplified_settings_testResult").addClass("alert-error");
                         self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> There was an error :(');
                     },
                     success: function (result) {
                         // triggered when open
                         if ($("#filamentsensorsimplified_settings_triggeredInput").val() === "0") {
                             if (result.triggered === true) {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
+                                $("#filamentsensorsimplified_settings_testResult").addClass("alert-success");
                                 self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
                             } else {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
+                                $("#filamentsensorsimplified_settings_testResult").addClass("alert-info");
                                 self.testSensorResult('<i class="icon-stop"></i> Sensor triggered!')
                             }
                         // triggered when closed
                         } else {
                             if (result.triggered === true) {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
+                                $("#filamentsensorsimplified_settings_testResult").addClass("alert-success");
                                 self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor triggered!');
                             } else {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
+                                $("#filamentsensorsimplified_settings_testResult").addClass("alert-info");
                                 self.testSensorResult('<i class="icon-stop"></i> Sensor detected filament or not working!')
                             }
                         }
-                    }
+                    },
                 }
-            );
+            ).always(function(){
+                $("#filamentsensorsimplified_settings_testResult").fadeIn();
+            });
         }
         self.checkWarningPullUp = function(event){
             // Which mode are we using
