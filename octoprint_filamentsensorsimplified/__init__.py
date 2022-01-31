@@ -371,12 +371,17 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 								bouncetime=self.bounce_time)
 
 					# print started with no filament present
-					if self.no_filament():
+					if self.no_filament() and event is Events.PRINT_STARTED:
 						self._logger.info("Printing aborted: no filament detected!")
 						self._printer.cancel_print()
 						self._plugin_manager.send_plugin_message(self._identifier,
 																 dict(type="error", autoClose=True,
 																	  msg="No filament detected! Print cancelled."))
+					elif self.no_filament() and event is Events.PRINT_RESUMED:
+						self._logger.info("Resuming print aborted: no filament detected!")
+						self._plugin_manager.send_plugin_message(self._identifier,
+																 dict(type="error", autoClose=True,
+																	  msg="Resuming print aborted: no filament detected!"))
 					# print started
 					else:
 						self.printing = True
