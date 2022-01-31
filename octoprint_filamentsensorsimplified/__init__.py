@@ -169,22 +169,37 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._printer.commands(self.g_code)
 		self.changing_filament_initiated = True
 
-	def sensor_callback(self, _):
-		trigger = True
+	def readSensor(self):
+		oldTrigger = self.no_filament()
+		readFinished = False
 
-		# take a reading of 5 consecutive reads to prevant false positives
-		for x in range(0, 5):
-			sleep(0.05)
-			if not self.no_filament():
-				trigger = False
+		# take a reading of 5 consecutive reads to prevent false positives
+		while not readFinished:
+			for x in range(0, 5):
+				sleep(0.5)
+				newTrigger = self.no_filament()
+				if oldTrigger != newTrigger:
+					self._logger.info("Repeating sensor read due to false positives")
+					break
+				oldTrigger = newTrigger
+			readFinished = True
+
+		return newTrigger
+
+	def sensor_callback(self, _):
+		trigger = self.readSensor()
 
 		if trigger:
 			self._logger.info("Sensor was triggered")
-			# if not self.changing_filament_initiated:
-			# 	self.send_out_of_filament()
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="filamentStatus", noFilament=True, msg="Printer ran out of filament!"))
+			if not self.changing_filament_initiated and self.printing:
+				self.send_out_of_filament()
+			# change navbar icon to filament runout
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="filamentStatus", noFilament=True,
+																			msg="Printer ran out of filament!"))
 		else:
-			self._plugin_manager.send_plugin_message(self._identifier, dict(type="filamentStatus", noFilament=False, msg="Filament inserted!"))
+			# change navbar icon to filament present
+			self._plugin_manager.send_plugin_message(self._identifier, dict(type="filamentStatus", noFilament=False,
+																			msg="Filament inserted!"))
 
 	def on_after_startup(self):
 		self._logger.info("Filament Sensor Simplified started")
@@ -194,7 +209,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if self.pin is -1:
 			self._logger.info("Fixing old settings from -1 to 0")
 			self._settings.set(["pin"], 0)
-			self.pin = 0
 		if gpio_mode is not None:
 			self._settings.set(["gpio_mode"], gpio_mode)
 			self.gpio_mode_disabled = True
@@ -252,6 +266,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 						self.pin, GPIO.FALLING,
 						callback=self.sensor_callback,
 						bouncetime=self.bounce_time)
+
+		sleep(0.5)
+		filament_present = self.readSensor()
+		# initial navbar icon read
+		self._plugin_manager.send_plugin_message(self._identifier,
+												 dict(type="filamentStatus", noFilament=False,
+													  msg="Initial filament read"))
 
 	def on_settings_save(self, data):
 		# Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
@@ -392,77 +413,28 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 																				msg="Don't forget to configure this plugin."))
 
 		if not (self.M600_gcode and not self.M600_supported):
-			# Enable sensor
-			if event in (
-					Events.PRINT_STARTED,
-					Events.PRINT_RESUMED
-			):
-				# self._logger.info("%s: Enabling filament sensor." % (event))
-				# if self.sensor_enabled():
-				# 	if self.gpio_mode is 10:
-				# 		GPIO.setmode(GPIO.BOARD)
-				# 	elif self.gpio_mode is 11:
-				# 		GPIO.setmode(GPIO.BCM)
-				#
-				# 	# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
-				# 	if self.power is 0:
-				# 		GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-				# 		# triggered when open
-				# 		if self.triggered is 0:
-				# 			self.turnOffDetection(event)
-				# 			self.detectionOn = True
-				# 			GPIO.add_event_detect(
-				# 				self.pin, GPIO.RISING,
-				# 				callback=self.sensor_callback,
-				# 				bouncetime=self.bounce_time)
-				# 		# triggered when closed
-				# 		else:
-				# 			self.turnOffDetection(event)
-				# 			self.detectionOn = True
-				# 			GPIO.add_event_detect(
-				# 				self.pin, GPIO.FALLING,
-				# 				callback=self.sensor_callback,
-				# 				bouncetime=self.bounce_time)
-				#
-				# 	# 1 = sensor is powered, react to falling edge pulled down by pull down resistor
-				# 	else:
-				# 		GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-				# 		# triggered when open
-				# 		if self.triggered is 0:
-				# 			self.turnOffDetection(event)
-				# 			self.detectionOn = True
-				# 			GPIO.add_event_detect(
-				# 				self.pin, GPIO.RISING,
-				# 				callback=self.sensor_callback,
-				# 				bouncetime=self.bounce_time)
-				# 		# triggered when closed
-				# 		else:
-				# 			self.turnOffDetection(event)
-				# 			self.detectionOn = True
-				# 			GPIO.add_event_detect(
-				# 				self.pin, GPIO.FALLING,
-				# 				callback=self.sensor_callback,
-				# 				bouncetime=self.bounce_time)
+			if event in (Events.PRINT_STARTED, Events.PRINT_RESUMED):
+				# print started with no filament present
+				if self.no_filament() and event is Events.PRINT_STARTED:
+					self._logger.info("Printing aborted: no filament detected!")
+					self._printer.cancel_print()
+					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
+																					msg="No filament detected! Print cancelled."))
+				elif self.no_filament() and event is Events.PRINT_RESUMED:
+					self._logger.info("Resuming print aborted: no filament detected!")
+					self._printer.pause_print()
+					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
+																					msg="Resuming print aborted: no filament detected!"))
+				self.changing_filament_initiated = False
+				self.changing_filament_command_sent = False
+				self.paused_for_user = False
+				self.printing = True
 
-					# print started with no filament present
-					if self.no_filament():
-						self._logger.info("Printing aborted: no filament detected!")
-						self._printer.cancel_print()
-						self._plugin_manager.send_plugin_message(self._identifier,
-																 dict(type="error", autoClose=True,
-																	  msg="No filament detected! Print cancelled."))
-					# print started
-					else:
-						self.printing = True
-					self.changing_filament_initiated = False
-					self.changing_filament_command_sent = False
-					self.paused_for_user = False
-
-				# print started without plugin configuration
-				else:
-					self._plugin_manager.send_plugin_message(self._identifier,
-															 dict(type="info", autoClose=True,
-																  msg="You may have forgotten to configure this plugin."))
+			# print started without plugin configuration
+			# else:
+			#	self._plugin_manager.send_plugin_message(self._identifier,
+			#											 dict(type="info", autoClose=True,
+			#												  msg="You may have forgotten to configure this plugin."))
 
 			# Disable sensor
 			elif event in (
@@ -471,18 +443,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					Events.PRINT_CANCELLED,
 					Events.ERROR
 			):
-				self.turnOffDetection(event)
 				self.changing_filament_initiated = False
 				self.changing_filament_command_sent = False
 				self.paused_for_user = False
 				self.printing = False
-
-	# turn off detection if on
-	def turnOffDetection(self,event):
-		if self.detectionOn:
-			self._logger.info("%s: Disabling filament sensor." % (event))
-			self.detectionOn = False
-			GPIO.remove_event_detect(self.pin)
 
 	def get_update_information(self):
 		# Define the configuration for your plugin to use with the Software Update
