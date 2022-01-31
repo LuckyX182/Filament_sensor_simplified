@@ -3,8 +3,9 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 import re
-from octoprint.events import Events
+from octoprint.events import Events, eventManager
 from time import sleep
+import time
 import RPi.GPIO as GPIO
 import flask
 
@@ -16,6 +17,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 									   octoprint.plugin.SimpleApiPlugin,
 									   octoprint.plugin.BlueprintPlugin,
 									   octoprint.plugin.AssetPlugin):
+
+	# last UI poll status
+	ui_status = 0
+	last_status = None
+	loaded = False
+
 	# bounce time for sensing
 	bounce_time = 250
 
@@ -33,6 +40,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# detection active
 	detectionOn = False
+
+	# has the GPIO been activated
+	gpio_activated = False
 
 	def initialize(self):
 		GPIO.setwarnings(True)
@@ -88,12 +98,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			pin=self.pin_num_disabled,  # Default is -1
 			power=0,
 			g_code=self.default_gcode,
-			triggered=0
+			triggered=0,
+			cmd_action="gcode"
 		)
 
 	# simpleApiPlugin
 	def get_api_commands(self):
-		return dict(testSensor=["pin", "power"])
+		return dict(testSensor=["pin", "power"],pollStatus=[],)
 
 	@octoprint.plugin.BlueprintPlugin.route("/disable", methods=["GET"])
 	def get_disable(self):
@@ -109,6 +120,17 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# test pin value, power pin or if its used by someone else
 	def on_api_command(self, command, data):
+		if command == "pollStatus":
+			if self.loaded == False:
+				return "Not started", 404
+
+			# only poll every 60 seconds and if auto detection is not running
+			timenow = int(time.time())
+			if self.detectionOn == False and (timenow - self.ui_status) >= 60:
+				if self.setupGPIO():
+					self.no_filament()
+			return flask.jsonify({'status' : self.last_status})
+
 		try:
 			selected_power = int(data.get("power"))
 			selected_pin = int(data.get("pin"))
@@ -119,8 +141,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			if mode is 10:
 				# if mode set by 3rd party don't set it again
 				if not self.gpio_mode_disabled:
-					GPIO.cleanup()
+					if self.gpio_activated:
+						GPIO.cleanup()
 					GPIO.setmode(GPIO.BOARD)
+					self.gpio_activated = True
+
 				# first check pins not in use already
 				usage = GPIO.gpio_function(selected_pin)
 				self._logger.debug("usage on pin %s is %s" % (selected_pin, usage))
@@ -135,8 +160,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					return "", 556
 				# if mode set by 3rd party don't set it again
 				if not self.gpio_mode_disabled:
-					GPIO.cleanup()
+					if self.gpio_activated:
+						GPIO.cleanup()
 					GPIO.setmode(GPIO.BCM)
+					self.gpio_activated = True
 
 			# before read don't let the pin float
 			self._logger.debug("selected power is %s" % selected_power)
@@ -178,6 +205,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				GPIO.setmode(GPIO.BCM)
 			self.gpio_mode_disabled = False
 		self._logger.info("Mode is %s" % (gpio_mode))
+
+		# get current status
+		if self.setupGPIO():
+			self.no_filament()
+
+		# ready
+		self.loaded = True
 
 	def on_settings_save(self, data):
 		# Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
@@ -274,8 +308,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._logger.debug("Printer doesn't support M600")
 				self.M600_supported = False
 				self.checking_M600 = False
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
-																				msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
+				self._settings.set(["cmd_action"], "opnative")
 			else:
 				self._logger.debug("M600 check unsuccessful, trying again")
 				self.checkM600Enabled()
@@ -287,7 +320,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# read sensor input value
 	def no_filament(self):
-		return (GPIO.input(self.pin) + self.power + self.triggered) % 2 is not 0
+		filaStatus = (GPIO.input(self.pin) + self.power + self.triggered) % 2 is not 0
+		self.ui_status = int(time.time())
+		self.last_status = filaStatus;
+
+		self._plugin_manager.send_plugin_message(self._identifier, dict(type="iconStatus", noFilament=filaStatus))
+		return filaStatus
 
 	# method invoked on event
 	def on_event(self, event, payload):
@@ -317,6 +355,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
 																				msg="Don't forget to configure this plugin."))
 
+			# get status for navbar
+			if self.setupGPIO():
+				self.no_filament()
+
 		if not (self.M600_gcode and not self.M600_supported):
 			# Enable sensor
 			if event in (
@@ -324,15 +366,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					Events.PRINT_RESUMED
 			):
 				self._logger.info("%s: Enabling filament sensor." % (event))
-				if self.sensor_enabled():
-					if self.gpio_mode is 10:
-						GPIO.setmode(GPIO.BOARD)
-					elif self.gpio_mode is 11:
-						GPIO.setmode(GPIO.BCM)
-
+				if self.setupGPIO():
 					# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
 					if self.power is 0:
-						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 						# triggered when open
 						if self.triggered is 0:
 							self.turnOffDetection(event)
@@ -352,7 +388,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 					# 1 = sensor is powered, react to falling edge pulled down by pull down resistor
 					else:
-						GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 						# triggered when open
 						if self.triggered is 0:
 							self.turnOffDetection(event)
@@ -386,6 +421,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					# print started
 					else:
 						self.printing = True
+					self.changing_filament_initiated = False
+					self.changing_filament_command_sent = False
+					self.paused_for_user = False
 
 				# print started without plugin configuration
 				else:
@@ -400,11 +438,30 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					Events.PRINT_CANCELLED,
 					Events.ERROR
 			):
+				self.no_filament()
 				self.turnOffDetection(event)
 				self.changing_filament_initiated = False
 				self.changing_filament_command_sent = False
 				self.paused_for_user = False
 				self.printing = False
+
+	# move into a function to keep it clean and it can also be used from other places
+	def setupGPIO(self):
+		if self.sensor_enabled():
+			if self.gpio_mode is 10:
+				GPIO.setmode(GPIO.BOARD)
+			elif self.gpio_mode is 11:
+				GPIO.setmode(GPIO.BCM)
+
+			# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
+			if self.power is 0:
+				GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+			# 1 = sensor is powered, react to falling edge pulled down by pull down resistor
+			else:
+				GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+			return True
+		else:
+			return False
 
 	# turn off detection if on
 	def turnOffDetection(self,event):
@@ -427,8 +484,14 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def send_out_of_filament(self):
 		self.show_printer_runout_popup()
-		self._logger.info("Sending out of filament GCODE: %s" % (self.g_code))
-		self._printer.commands(self.g_code)
+		eventManager().fire(Events.FILAMENT_CHANGE)
+		cmd_action = self._settings.get(["cmd_action"])
+		if cmd_action == "gcode":
+			self._logger.info("Sending out of filament GCODE: %s" % (self.g_code))
+			self._printer.commands(self.g_code)
+		else:
+			self._logger.info("Pausing print using OctoPrint native pause")
+			self._printer.pause_print()
 		self.changing_filament_initiated = True
 
 	def show_printer_runout_popup(self):
