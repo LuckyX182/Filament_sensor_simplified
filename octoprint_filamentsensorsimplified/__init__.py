@@ -379,6 +379,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 																	  msg="No filament detected! Print cancelled."))
 					elif self.no_filament() and event is Events.PRINT_RESUMED:
 						self._logger.info("Resuming print aborted: no filament detected!")
+						self._printer.pause_print()
 						self._plugin_manager.send_plugin_message(self._identifier,
 																 dict(type="error", autoClose=True,
 																	  msg="Resuming print aborted: no filament detected!"))
