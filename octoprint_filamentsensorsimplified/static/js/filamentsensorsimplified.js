@@ -16,6 +16,12 @@ $(function () {
                 return;
             }
 
+            // Update icon
+            if (data.type == "filamentStatus"){
+                self.updateIconStatus(data.noFilament);
+                return;
+            }
+
             new PNotify({
                 title: 'Filament sensor simplified',
                 text: data.msg,
@@ -23,6 +29,16 @@ $(function () {
                 hide: data.autoClose
             });
 
+        }
+
+        self.updateIconStatus = function(noFilament){
+            if (noFilament){
+                $('#navbar_plugin_filamentsensorsimplified i').replaceWith('<i class="text-error fas fa-dot-circle"></i>');
+                $('#navbar_plugin_filamentsensorsimplified a').attr('title','Filament NOT detected');
+            }else{
+                $('#navbar_plugin_filamentsensorsimplified i').replaceWith('<i class="text-success fas fa-circle"></i>');
+                $('#navbar_plugin_filamentsensorsimplified a').attr('title','Filament detected');
+            }
         }
 
         self.testSensor = function () {
@@ -84,6 +100,7 @@ $(function () {
                 }
             );
         }
+
         self.checkWarningPullUp = function(event){
             // Which mode are we using
             var mode = parseInt($('#filamentsensorsimplified_settings_gpioMode').val(),10);
