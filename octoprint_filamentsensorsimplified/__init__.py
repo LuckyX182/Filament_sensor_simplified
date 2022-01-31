@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import octoprint.plugin
 import re
-from octoprint.events import Events
+from octoprint.events import Events, eventManager
 from time import sleep
 import time
 import RPi.GPIO as GPIO
@@ -478,6 +478,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def send_out_of_filament(self):
 		self.show_printer_runout_popup()
+		eventManager().fire(Events.FILAMENT_CHANGE)
 		cmd_action = self._settings.get(["cmd_action"])
 		if cmd_action == "gcode":
 			self._logger.info("Sending out of filament GCODE: %s" % (self.g_code))
