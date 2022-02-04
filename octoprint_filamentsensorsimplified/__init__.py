@@ -150,7 +150,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 			triggered_bool = (pin_value + selected_power + triggered) % 2 is 0
 			self._logger.debug("triggered value %s" % triggered_bool)
-			# self.initGPIO()
+			self.initGPIO()
 			return flask.jsonify(triggered=triggered_bool)
 		except ValueError as e:
 			self._logger.error(str(e))
@@ -175,7 +175,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		# take a reading of 5 consecutive reads to prevent false positives
 		while not readFinished:
 			for x in range(0, 5):
-				sleep(0.5)
+				# sleep(0.5)
 				newTrigger = self.no_filament()
 				if oldTrigger != newTrigger:
 					self._logger.info("Repeating sensor read due to false positives")
@@ -203,9 +203,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 																			msg="Filament inserted!"))
 
 	def initGPIO(self):
+		# GPIO.remove_event_detect(self.setting_pin)
 		GPIO.cleanup()
 		gpio_mode = GPIO.getmode()
-		# GPIO.remove_event_detect(self.pin)
 
 		# Fix old -1 settings to 0
 		if self.setting_pin is -1:
@@ -268,12 +268,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._logger.info("Filament Sensor Simplified started")
 		self.initGPIO()
 
-		sleep(0.5)
-		filament_present = self.readSensor()
-		# initial navbar icon read
-		self._plugin_manager.send_plugin_message(self._identifier,
-												 dict(type="filamentStatus", noFilament=False,
-													  msg="Initial filament read"))
+		# self._logger.info("Reading initial value")
+		# filament_present = self.readSensor()
+		# # initial navbar icon read
+		# self._plugin_manager.send_plugin_message(self._identifier,
+		# 										 dict(type="filamentStatus", noFilament=False,
+		# 											  msg="Initial filament read"))
 
 	def on_settings_save(self, data):
 		# Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
@@ -403,6 +403,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 		# if user has logged in show appropriate popup
 		elif event is Events.CLIENT_OPENED:
+			self._logger.info("Reading initial value")
+			filament_present = self.readSensor()
+			# initial navbar icon read
+			self._plugin_manager.send_plugin_message(self._identifier,
+													 dict(type="filamentStatus", noFilament=filament_present,
+														  msg="Initial filament read"))
 			if self.changing_filament_initiated and not self.changing_filament_command_sent:
 				self.show_printer_runout_popup()
 			elif self.changing_filament_command_sent and not self.paused_for_user:
