@@ -34,7 +34,7 @@ $(function () {
         self.updateIconStatus = function(noFilament){
             if (noFilament){
                 $('#navbar_plugin_filamentsensorsimplified a').html('<span class="fa-stack fa-1x"><i class="fas fa-life-ring fa-stack-1x"></i><i class="fas fa-ban fa-stack-2x text-error"></i></span>').attr('title','Filament NOT detected');
-            }else{
+            } else {
                 $('#navbar_plugin_filamentsensorsimplified a').html('<i class="fas fa-life-ring fa-lg"></i>').attr('title','Filament detected');
             }
         }
@@ -75,24 +75,15 @@ $(function () {
                         self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> There was an error :(');
                     },
                     success: function (result) {
-                        // triggered when open
-                        if ($("#filamentsensorsimplified_settings_triggeredInput").val() === "0") {
-                            if (result.triggered === true) {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
-                                self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
-                            } else {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
-                                self.testSensorResult('<i class="icon-stop"></i> Sensor triggered!')
-                            }
-                        // triggered when closed
-                        } else {
-                            if (result.triggered === true) {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
-                                self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor triggered!');
-                            } else {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
-                                self.testSensorResult('<i class="icon-stop"></i> Sensor detected filament or not working!')
-                            }
+                        if (result.triggered === 0) {
+                            $("#filamentsensorsimplified_settings_testResult").addClass("text-success");
+                            self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
+                        } else if (result.triggered === 1) {
+                            $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
+                            self.testSensorResult('<i class="icon-stop"></i> Sensor triggered!')
+                        } else if (result.triggered === 2) {
+                            $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
+                            self.testSensorResult('<i class="icon-stop"></i> Sensor detected filament or not working!')
                         }
                     }
                 }
