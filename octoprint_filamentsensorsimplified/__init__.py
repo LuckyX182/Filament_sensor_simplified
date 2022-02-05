@@ -115,14 +115,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self._logger.info("triggered mode %s " % triggered_mode)
 
 			self.initGPIO(mode, selected_pin, selected_power, triggered_mode)
-			#
-			# # before read don't let the pin float
-			# self._logger.debug("selected power is %s" % selected_power)
-			# if selected_power is 0:
-			# 	GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-			# else:
-			# 	GPIO.setup(selected_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-
 			triggered_int = self.isFilamentPresent(selected_pin, selected_power, triggered_mode)
 			self.initGPIO(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered)
 			return flask.jsonify(triggered=triggered_int)
@@ -178,10 +170,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 																			msg="Filament inserted!"))
 
 	def initGPIO(self, gpio_mode, pin, power, trigger_mode):
-		# GPIO.remove_event_detect(self.setting_pin)
-		# GPIO.cleanup()
-		# gpio_mode = GPIO.getmode()
-
 		# Fix old -1 settings to 0
 		if pin is -1:
 			self._logger.info("Fixing old settings from -1 to 0")
@@ -376,7 +364,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def initIcon(self):
 		self._logger.info("Setting icon status")
-		# initial navbar icon read
 		iconPresent = self.isFilamentPresent(self.setting_pin, self.setting_power, self.setting_triggered)
 		self._plugin_manager.send_plugin_message(self._identifier,
 												 dict(type="filamentStatus", noFilament=iconPresent,
@@ -388,7 +375,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		readFinished = False
 		newTrigger = False
 
-		# take a reading of 5 consecutive reads to prevent false positives
+		# take a reading of 10 consecutive reads to prevent false positives
 		while not readFinished:
 			for x in range(0, 10):
 				sleep(0.2)
