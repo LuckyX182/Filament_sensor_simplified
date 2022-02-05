@@ -390,8 +390,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 		# take a reading of 5 consecutive reads to prevent false positives
 		while not readFinished:
-			for x in range(0, 5):
-				# sleep(0.5)
+			for x in range(0, 10):
+				sleep(0.2)
 				newTrigger = self.no_filament(pin, power, trigger_mode)
 				if oldTrigger != newTrigger:
 					self._logger.info("Repeating sensor read due to false positives")
@@ -443,12 +443,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if not (self.M600_gcode and not self.M600_supported):
 			if event in (Events.PRINT_STARTED, Events.PRINT_RESUMED):
 				# print started with no filament present
-				if self.no_filament(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_STARTED:
+				if not self.readSensor(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_STARTED:
 					self._logger.info("Printing aborted: no filament detected!")
 					self._printer.cancel_print()
 					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
 																					msg="No filament detected! Print cancelled."))
-				elif self.no_filament(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_RESUMED:
+				elif not self.readSensor(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_RESUMED:
 					self._logger.info("Resuming print aborted: no filament detected!")
 					self._printer.pause_print()
 					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
@@ -457,12 +457,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self.changing_filament_command_sent = False
 				self.paused_for_user = False
 				self.printing = True
-
-			# print started without plugin configuration
-			# else:
-			#	self._plugin_manager.send_plugin_message(self._identifier,
-			#											 dict(type="info", autoClose=True,
-			#												  msg="You may have forgotten to configure this plugin."))
 
 			# Disable sensor
 			elif event in (
