@@ -167,24 +167,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self._printer.commands(self.setting_gcode)
 		self.changing_filament_initiated = True
 
-	def readSensor(self):
-		self._logger.info("Reading sensor values")
-		oldTrigger = self.no_filament()
-		readFinished = False
-
-		# take a reading of 5 consecutive reads to prevent false positives
-		while not readFinished:
-			for x in range(0, 5):
-				# sleep(0.5)
-				newTrigger = self.no_filament()
-				if oldTrigger != newTrigger:
-					self._logger.info("Repeating sensor read due to false positives")
-					break
-				oldTrigger = newTrigger
-			readFinished = True
-
-		return newTrigger
-
 	def sensor_callback(self, _):
 		self._logger.info("Sensor callback called")
 		self._logger.info("set pin %s " % self.setting_pin)
@@ -277,6 +259,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def on_settings_save(self, data):
 		# Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
+		self._logger.info("Saving settings for Filament Sensor Simplified")
 		pin_to_save = self._settings.get_int(["pin"])
 		mode_to_save = self._settings.get_int(["gpio_mode"])
 
@@ -319,6 +302,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 																					msg="Filament sensor settings not saved, you are trying to use a pin which is ground/power pin or out of range"))
 					return
 		self.initGPIO()
+		self.initIcon()
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
 	def checkM600Enabled(self):
@@ -377,6 +361,45 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self.checkM600Enabled()
 		return line
 
+	def initIcon(self):
+		self._logger.info("Setting icon status")
+		no_filament_present = self.readSensor()
+		self._logger.info("No filament present %s" % (no_filament_present))
+		# initial navbar icon read
+		iconPresent = True
+		# triggered when open
+		if self.setting_triggered is 0:
+			if no_filament_present:
+				iconPresent = False
+			else:
+				iconPresent = True
+		else:
+			if no_filament_present:
+				iconPresent = False
+
+		self._plugin_manager.send_plugin_message(self._identifier,
+												 dict(type="filamentStatus", noFilament=iconPresent,
+													  msg="Initial filament read"))
+
+	def readSensor(self):
+		self._logger.info("Reading sensor values")
+		oldTrigger = self.no_filament()
+		readFinished = False
+		newTrigger = False
+
+		# take a reading of 5 consecutive reads to prevent false positives
+		while not readFinished:
+			for x in range(0, 5):
+				# sleep(0.5)
+				newTrigger = self.no_filament()
+				if oldTrigger != newTrigger:
+					self._logger.info("Repeating sensor read due to false positives")
+					break
+				oldTrigger = newTrigger
+			readFinished = True
+
+		return newTrigger
+
 	# plugin disabled if pin set to 0
 	def sensor_enabled(self):
 		return self.setting_pin != self.pin_num_disabled
@@ -384,7 +407,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# read sensor input value
 	def no_filament(self):
 		self._logger.info("set pin %s " % self.setting_pin)
-		GPIO.setup(self.setting_pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 		pin_value = GPIO.input(self.setting_pin)
 		return (pin_value + self.setting_power + self.setting_triggered) % 2 is not 0
 
@@ -403,12 +425,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 		# if user has logged in show appropriate popup
 		elif event is Events.CLIENT_OPENED:
-			self._logger.info("Reading initial value")
-			filament_present = self.readSensor()
-			# initial navbar icon read
-			self._plugin_manager.send_plugin_message(self._identifier,
-													 dict(type="filamentStatus", noFilament=filament_present,
-														  msg="Initial filament read"))
+			self.initIcon()
 			if self.changing_filament_initiated and not self.changing_filament_command_sent:
 				self.show_printer_runout_popup()
 			elif self.changing_filament_command_sent and not self.paused_for_user:
