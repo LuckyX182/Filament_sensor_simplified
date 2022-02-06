@@ -109,11 +109,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			mode = int(data.get("mode"))
 			triggered_mode = int(data.get("triggered"))
 
-			self._logger.info("power %s " % selected_power)
-			self._logger.info("pin %s " % selected_pin)
-			self._logger.info("mode %s " % mode)
-			self._logger.info("triggered mode %s " % triggered_mode)
-
 			self.initGPIO(mode, selected_pin, selected_power, triggered_mode)
 			triggered_int = self.isFilamentPresent(selected_pin, selected_power, triggered_mode)
 			self.initGPIO(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered)
@@ -126,7 +121,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def isFilamentPresent(self, pin, power, triggered_mode):
 		# triggered when open
 		if triggered_mode is 0:
-			if self.readSensor(pin, power, triggered_mode):
+			if self.readSensorMultiple(pin, power, triggered_mode):
 				self._logger.info("Filament detected")
 				return 0
 			else:
@@ -134,7 +129,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				return 1
 		# triggered when closed
 		else:
-			if self.readSensor(pin, power, triggered_mode):
+			if self.readSensorMultiple(pin, power, triggered_mode):
 				self._logger.info("Filament detected")
 				return 0
 			else:
@@ -260,22 +255,30 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def on_settings_save(self, data):
 		# Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
-		self._logger.info("Saving settings for Filament Sensor Simplified")
+		self._logger.debug("Saving settings for Filament Sensor Simplified")
 		pin_to_save = self._settings.get_int(["pin"])
-		mode_to_save = self._settings.get_int(["gpio_mode"])
+		gpio_mode_to_save = self._settings.get_int(["gpio_mode"])
+		power_to_save = self._settings.get_int(["power"])
+		trigger_mode_to_save = self._settings.get_int(["triggered"])
 
 		if "pin" in data:
 			pin_to_save = int(data.get("pin"))
 
 		if "gpio_mode" in data:
-			mode_to_save = int(data.get("gpio_mode"))
+			gpio_mode_to_save = int(data.get("gpio_mode"))
+
+		if "power" in data:
+			power_to_save = int(data.get("power"))
+
+		if "trigger" in data:
+			trigger_mode_to_save = int(data.get("triggered"))
 
 		if pin_to_save is not None:
 			# check if pin is not power/ground pin or out of range but allow the disabled value (0)
 			if pin_to_save is not 0:
 				try:
 					# BOARD
-					if mode_to_save is 10:
+					if gpio_mode_to_save is 10:
 						# before saving check if pin not used by others
 						usage = GPIO.gpio_function(pin_to_save)
 						self._logger.debug("usage on pin %s is %s" % (pin_to_save, usage))
@@ -287,7 +290,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 																		  msg="Filament sensor settings not saved, you are trying to use a pin which is already used by others"))
 							return
 					# BCM
-					elif mode_to_save is 11:
+					elif gpio_mode_to_save is 11:
 						if pin_to_save > 27:
 							self._logger.info(
 								"You are trying to save pin %s which is out of range" % (pin_to_save))
@@ -302,8 +305,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
 																					msg="Filament sensor settings not saved, you are trying to use a pin which is ground/power pin or out of range"))
 					return
-		self.initGPIO(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered)
-		self.initIcon()
+		self.initGPIO(gpio_mode_to_save, pin_to_save, power_to_save, trigger_mode_to_save)
+		self.initIcon(pin_to_save, power_to_save, trigger_mode_to_save)
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
 	def checkM600Enabled(self):
@@ -320,7 +323,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 					self.changing_filament_initiated = False
 					self.changing_filament_command_sent = False
 					self.changing_filament_started = False
-					if self.no_filament(self.setting_pin, self.setting_power, self.setting_triggered):
+					if self.read_sensor(self.setting_pin, self.setting_power, self.setting_triggered):
 						self.send_out_of_filament()
 			if cmd == self.setting_gcode:
 				self.changing_filament_command_sent = True
@@ -362,16 +365,16 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self.checkM600Enabled()
 		return line
 
-	def initIcon(self):
+	def initIcon(self, pin, power, triggered):
 		self._logger.info("Setting icon status")
-		iconPresent = self.isFilamentPresent(self.setting_pin, self.setting_power, self.setting_triggered)
+		iconPresent = self.isFilamentPresent(pin, power, triggered)
 		self._plugin_manager.send_plugin_message(self._identifier,
 												 dict(type="filamentStatus", noFilament=iconPresent,
 													  msg="Initial filament read"))
 
-	def readSensor(self, pin, power, trigger_mode):
+	def readSensorMultiple(self, pin, power, trigger_mode):
 		self._logger.info("Reading sensor values")
-		oldTrigger = self.no_filament(pin, power, trigger_mode)
+		oldTrigger = self.read_sensor(pin, power, trigger_mode)
 		readFinished = False
 		newTrigger = False
 
@@ -379,7 +382,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		while not readFinished:
 			for x in range(0, 10):
 				sleep(0.2)
-				newTrigger = self.no_filament(pin, power, trigger_mode)
+				newTrigger = self.read_sensor(pin, power, trigger_mode)
 				if oldTrigger != newTrigger:
 					self._logger.info("Repeating sensor read due to false positives")
 					break
@@ -393,7 +396,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		return self.setting_pin != 0
 
 	# read sensor input value
-	def no_filament(self, pin, power, trigger_mode):
+	def read_sensor(self, pin, power, trigger_mode):
 		self._logger.info("reading pin %s " % pin)
 		pin_value = GPIO.input(pin)
 		return (pin_value + power + trigger_mode) % 2 is 0
@@ -413,7 +416,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 		# if user has logged in show appropriate popup
 		elif event is Events.CLIENT_OPENED:
-			self.initIcon()
+			self.initIcon(self.setting_pin, self.setting_power, self.setting_triggered)
 			if self.changing_filament_initiated and not self.changing_filament_command_sent:
 				self.show_printer_runout_popup()
 			elif self.changing_filament_command_sent and not self.paused_for_user:
@@ -430,12 +433,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if not (self.M600_gcode and not self.M600_supported):
 			if event in (Events.PRINT_STARTED, Events.PRINT_RESUMED):
 				# print started with no filament present
-				if not self.readSensor(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_STARTED:
+				if not self.readSensorMultiple(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_STARTED:
 					self._logger.info("Printing aborted: no filament detected!")
 					self._printer.cancel_print()
 					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
 																					msg="No filament detected! Print cancelled."))
-				elif not self.readSensor(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_RESUMED:
+				elif not self.readSensorMultiple(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_RESUMED:
 					self._logger.info("Resuming print aborted: no filament detected!")
 					self._printer.pause_print()
 					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
