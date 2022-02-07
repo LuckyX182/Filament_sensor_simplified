@@ -70,8 +70,11 @@
         </div>
         <div class="controls" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">
             <br/>
-            <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
-            <span class="help-block">Which G-code will be sent to printer on filament runout.</span>
+            <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('G-code') }}</label>
+            <div class="controls">
+                <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
+                <span class="help-block">Which G-code will be sent to printer on filament runout.</span>
+            </div>
         </div>
     </div>
 
