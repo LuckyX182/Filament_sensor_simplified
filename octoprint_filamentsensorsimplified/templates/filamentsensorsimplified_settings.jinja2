@@ -64,11 +64,11 @@
         <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('Action') }}</label>
         <div class="controls">
             <select data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action, disable:printing" required>
-                <option value="gcode">{{ _('Send G-code') }}</option>
-                <option value="opnative">{{ _('OctoPrint pause') }}</option>
+                <option value=0>{{ _('Send G-code') }}</option>
+                <option value=1>{{ _('OctoPrint pause') }}</option>
             </select>
         </div>
-        <div class="controls" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 'gcode'">
+        <div class="controls" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">
             <br/>
             <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
             <span class="help-block">Which G-code will be sent to printer on filament runout.</span>
