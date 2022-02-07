@@ -13,8 +13,3 @@
 	animation: pulsate 1s ease-out;
     animation-iteration-count: 1;
 }
-
-#filamentsensorsimplified_settings_testResult{
-	display: block;
-	margin-bottom: 10px;
-}

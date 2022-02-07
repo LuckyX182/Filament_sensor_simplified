@@ -67,6 +67,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def setting_triggered(self):
 		return int(self._settings.get(["triggered"]))
 
+	@property
+	def setting_cmd_action(self):
+		return int(self._settings.get(["cmd_action"]))
+
 	# AssetPlugin hook
 	def get_assets(self):
 		return dict(js=["js/filamentsensorsimplified.js"], css=["css/filamentsensorsimplified.css"])
@@ -82,7 +86,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			pin=0,  # Default is 0
 			power=0,
 			g_code=self.default_gcode,
-			triggered=0
+			triggered=0,
+			cmd_action="gcode"
 		)
 
 	# simpleApiPlugin
@@ -133,7 +138,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	def send_out_of_filament(self):
 		self.show_printer_runout_popup()
 		self._logger.info("Sending out of filament GCODE: %s" % (self.setting_gcode))
-		self._printer.commands(self.setting_gcode)
+		if self.setting_cmd_action == "gcode":
+			self._logger.info("Sending out of filament GCODE: %s" % (self.setting_gcode))
+			self._printer.commands(self.setting_gcode)
+		else:
+			self._logger.info("Pausing print using OctoPrint native pause")
+			self._printer.pause_print()
 		self.changing_filament_initiated = True
 
 	def sensor_callback(self, _):
