@@ -81,9 +81,6 @@ $(function () {
                         } else if (result.triggered === 1) {
                             $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
                             self.testSensorResult('<i class="icon-stop"></i> Sensor triggered!')
-                        } else if (result.triggered === 2) {
-                            $("#filamentsensorsimplified_settings_testResult").addClass("text-info");
-                            self.testSensorResult('<i class="icon-stop"></i> Sensor detected filament or not working!')
                         }
                     }
                 }

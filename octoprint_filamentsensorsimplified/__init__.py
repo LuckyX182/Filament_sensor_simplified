@@ -119,22 +119,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			return "", 556
 
 	def is_filament_present(self, pin, power, triggered_mode):
-		# triggered when open
-		if triggered_mode is 0:
-			if self.read_sensor_multiple(pin, power, triggered_mode):
-				self._logger.info("Filament detected")
-				return 0
-			else:
-				self._logger.info("Filament not detected")
-				return 1
-		# triggered when closed
+		if self.read_sensor_multiple(pin, power, triggered_mode):
+			self._logger.info("Filament detected")
+			return 0
 		else:
-			if self.read_sensor_multiple(pin, power, triggered_mode):
-				self._logger.info("Filament detected")
-				return 0
-			else:
-				self._logger.info("Sensor detected filament or not working")
-				return 2
+			self._logger.info("Filament not detected")
+			return 1
 
 	def show_printer_runout_popup(self):
 		self._plugin_manager.send_plugin_message(self._identifier,
@@ -209,9 +199,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 			# 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
 			if power is 0:
-				self._logger.debug("Pulling up resistor")
-				GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-				self._logger.debug("Done")
+				self.pull_resistor(pin, power)
 				# triggered when open
 				if trigger_mode is 0:
 					self._logger.debug("Reacting to rising edge")
@@ -229,9 +217,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 			# 1 = sensor is powered, react to falling edge pulled down by pull down resistor
 			else:
-				self._logger.debug("Pulling down resistor")
-				GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-				self._logger.debug("Done")
+				self.pull_resistor(pin, power)
 				# triggered when open
 				if trigger_mode is 0:
 					self._logger.debug("Reacting to falling edge")
@@ -248,6 +234,16 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 						bouncetime=self.bounce_time)
 		else:
 			self._logger.info("Sensor disabled")
+
+	# pulls resistor up or down based on the parameters
+	def pull_resistor(self, pin, power):
+		if power is 0:
+			self._logger.debug("Pulling up resistor")
+			GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+		elif power is 1:
+			self._logger.debug("Pulling down resistor")
+			GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+		self._logger.debug("Done")
 
 	def on_after_startup(self):
 		self._logger.info("Filament Sensor Simplified started")
@@ -398,6 +394,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 	# read sensor input value
 	def read_sensor(self, pin, power, trigger_mode):
 		self._logger.info("reading pin %s " % pin)
+		self.pull_resistor(pin, power)
 		pin_value = GPIO.input(pin)
 		return (pin_value + power + trigger_mode) % 2 is 0
 
