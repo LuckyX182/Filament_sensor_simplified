@@ -160,7 +160,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self._logger.info("Fixing old settings from -1 to 0")
 			self._settings.set(["pin"], 0)
 
-		if self.plugin_enabled():
+		if self.plugin_enabled(pin):
 			# BOARD
 			if gpio_mode is 10:
 				# if mode set by 3rd party don't set it again
@@ -388,8 +388,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		return newTrigger
 
 	# plugin disabled if pin set to 0
-	def plugin_enabled(self):
-		return self.setting_pin != 0
+	def plugin_enabled(self, pin):
+		return pin != 0
 
 	# read sensor input value
 	def read_sensor(self, pin, power, trigger_mode):
@@ -413,7 +413,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 		# if user has logged in show appropriate popup
 		elif event is Events.CLIENT_OPENED:
-			self.init_icon(self.setting_pin, self.setting_power, self.setting_triggered)
+			# if plugin enabled init icon on client open
+			if self.plugin_enabled(self.setting_pin):
+				self.init_icon(self.setting_pin, self.setting_power, self.setting_triggered)
 			if self.changing_filament_initiated and not self.changing_filament_command_sent:
 				self.show_printer_runout_popup()
 			elif self.changing_filament_command_sent and not self.paused_for_user:
@@ -423,7 +425,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=False,
 																				msg="Printer ran out of filament! It's waiting for user input"))
 			# if the plugin hasn't been initialized
-			if not self.plugin_enabled():
+			if not self.plugin_enabled(self.setting_pin):
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
 																				msg="Don't forget to configure this plugin."))
 
