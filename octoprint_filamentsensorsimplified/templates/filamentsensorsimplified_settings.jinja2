@@ -59,6 +59,14 @@
         </div>
     </div>
 
+    <div class="control-group">
+        <div class="controls">
+            <strong id="filamentsensorsimplified_settings_testResult" data-bind="html: testSensorResult"></strong>
+            <input type="button" class="btn btn-info" data-bind="click: testSensor, disable:printing" value="Test sensor">
+            <div id="filamentsensorsimplified_settings_testResult" class="hide alert" data-bind="html: testSensorResult"></div>
+        </div>
+    </div>
+
     <h4>{{ _('Filament run out action') }}</h4>
     <div class="control-group">
         <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('Action') }}</label>
@@ -68,22 +76,14 @@
                 <option value=1>{{ _('OctoPrint pause') }}</option>
             </select>
         </div>
-        <div class="controls" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">
-            <br/>
-            <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('G-code') }}</label>
-            <div class="controls">
-                <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
-                <span class="help-block">Which G-code will be sent to printer on filament runout.</span>
-            </div>
-        </div>
-    </div>
 
-    <div class="control-group">
-        <div class="controls">
-            <strong id="filamentsensorsimplified_settings_testResult" data-bind="html: testSensorResult"></strong>
-            <input type="button" class="btn btn-info" data-bind="click: testSensor, disable:printing" value="Test sensor">
-            <div id="filamentsensorsimplified_settings_testResult" class="hide alert" data-bind="html: testSensorResult"></div>
+        <br/>
+        <label class="control-label" for="filamentsensorsimplified_settings_commandInput" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">{{ _('G-code') }}</label>
+        <div class="controls" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">
+            <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
+            <span class="help-block">Which G-code will be sent to printer on filament runout.</span>
         </div>
+
     </div>
 
     <div class="alert alert-info hidden" id="filamentsensorsimplified_settings_pullupwarn">
