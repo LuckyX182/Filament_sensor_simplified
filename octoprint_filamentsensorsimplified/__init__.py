@@ -30,10 +30,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def initialize(self):
 		GPIO.setwarnings(True)
-		# flag telling that we are expecting M603 response
-		self.checking_M600 = False
-		# flag defining if printer supports M600
-		self.M600_supported = True
 		# flag defining that the filament change command has been sent to printer, this does not however mean that
 		# filament change sequence has been started
 		self.changing_filament_initiated = False
@@ -42,8 +38,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		# flag defining that the filament change sequence has been started and the printer is waiting for user
 		# to put in new filament
 		self.paused_for_user = False
-		# flag for determining if the gcode starts with M600
-		self.M600_gcode = True
 		# flag to prevent double detection
 		self.changing_filament_started = False
 
@@ -309,14 +303,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		self.init_icon(pin_to_save, power_to_save, trigger_mode_to_save)
 		octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
-	def check_m600_enabled(self):
-		sleep(1)
-		self.checking_M600 = True
-		self._printer.commands("M603")
-
 	# this method is called before the gcode is sent to printer
 	def sending_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
-		if self.changing_filament_initiated and self.M600_supported:
+		if self.changing_filament_initiated:
 			if self.changing_filament_command_sent and self.changing_filament_started:
 				# M113 - host keepalive message, ignore this message
 				if not re.search("^M113", cmd):
@@ -329,7 +318,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self.changing_filament_command_sent = True
 
 		# deliberate change
-		if self.M600_supported and re.search("^M600", cmd):
+		if re.search("^M600", cmd):
 			self.changing_filament_initiated = True
 			self.changing_filament_command_sent = True
 
@@ -347,22 +336,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._logger.debug("received busy processing")
 				if self.paused_for_user:
 					self.paused_for_user = False
-
-		# waiting for M603 command response
-		if self.checking_M600:
-			if re.search("^ok", line):
-				self._logger.debug("Printer supports M600")
-				self.M600_supported = True
-				self.checking_M600 = False
-			elif re.search("^echo:Unknown command: \"M603\"", line):
-				self._logger.debug("Printer doesn't support M600")
-				self.M600_supported = False
-				self.checking_M600 = False
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
-																				msg="M600 gcode command is not enabled on this printer! This plugin won't work."))
-			else:
-				self._logger.debug("M600 check unsuccessful, trying again")
-				self.check_m600_enabled()
 		return line
 
 	def init_icon(self, pin, power, triggered):
@@ -404,19 +377,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# method invoked on event
 	def on_event(self, event, payload):
-		# octoprint connects to 3D printer
-		if event is Events.CONNECTED:
-			# if the command starts with M600, check if printer supports M600
-			if re.search("^M600", self.setting_gcode):
-				self.M600_gcode = True
-				self.check_m600_enabled()
-
-		# octoprint disconnects from 3D printer, reset M600 enabled variable
-		elif event is Events.DISCONNECTED:
-			self.M600_supported = True
-
 		# if user has logged in show appropriate popup
-		elif event is Events.CLIENT_OPENED:
+		if event is Events.CLIENT_OPENED:
 			# if plugin enabled init icon on client open
 			if self.plugin_enabled(self.setting_pin):
 				self.init_icon(self.setting_pin, self.setting_power, self.setting_triggered)
@@ -433,38 +395,35 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
 																				msg="Don't forget to configure this plugin."))
 
-		if not (self.M600_gcode and not self.M600_supported):
-			if event in (Events.PRINT_STARTED, Events.PRINT_RESUMED):
-				self.changing_filament_initiated = False
-				self.changing_filament_command_sent = False
-				self.paused_for_user = False
-				self.printing = True
+		if event in (Events.PRINT_STARTED, Events.PRINT_RESUMED):
+			self.changing_filament_initiated = False
+			self.changing_filament_command_sent = False
+			self.paused_for_user = False
+			self.printing = True
 
-				# print started with no filament present
-				if not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_STARTED:
-					self._logger.info("Printing aborted: no filament detected!")
-					self._printer.cancel_print()
-					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
-																					msg="No filament detected! Print cancelled."))
-				# print resumed with no filament present
-				elif not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_RESUMED:
-					self._logger.info("Resuming print aborted: no filament detected!")
-					self.send_out_of_filament()
-					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
-																					msg="Resuming print aborted: no filament detected!"))
+			# print started with no filament present
+			if not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_STARTED:
+				self._logger.info("Printing aborted: no filament detected!")
+				self._printer.cancel_print()
+				self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
+																				msg="No filament detected! Print cancelled."))
+			# print resumed with no filament present
+			elif not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_RESUMED:
+				self._logger.info("Resuming print aborted: no filament detected!")
+				self.send_out_of_filament()
+				self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
+																				msg="Resuming print aborted: no filament detected!"))
 
-
-			# Disable sensor
-			elif event in (
-					Events.PRINT_DONE,
-					Events.PRINT_FAILED,
-					Events.PRINT_CANCELLED,
-					Events.ERROR
-			):
-				self.changing_filament_initiated = False
-				self.changing_filament_command_sent = False
-				self.paused_for_user = False
-				self.printing = False
+		if event in (
+				Events.PRINT_DONE,
+				Events.PRINT_FAILED,
+				Events.PRINT_CANCELLED,
+				Events.ERROR
+		):
+			self.changing_filament_initiated = False
+			self.changing_filament_command_sent = False
+			self.paused_for_user = False
+			self.printing = False
 
 	def get_update_information(self):
 		# Define the configuration for your plugin to use with the Software Update
