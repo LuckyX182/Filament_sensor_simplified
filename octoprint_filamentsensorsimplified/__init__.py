@@ -128,7 +128,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if self.setting_cmd_action is 0:
 			self._logger.info("Sending out of filament GCODE: %s" % (self.setting_gcode))
 			self._printer.commands(self.setting_gcode)
-		else:
+		elif self.setting_cmd_action is 1:
 			self._logger.info("Pausing print using OctoPrint native pause")
 			self._printer.commands('G1 X0 Y0')
 			self._printer.pause_print()
@@ -249,7 +249,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	def on_settings_save(self, data):
 		# Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
-		self._logger.debug("Saving settings for Filament Sensor Simplified")
+		self._logger.info("Saving settings for Filament Sensor Simplified")
 		pin_to_save = self._settings.get_int(["pin"])
 		gpio_mode_to_save = self._settings.get_int(["gpio_mode"])
 		power_to_save = self._settings.get_int(["power"])
@@ -370,7 +370,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
 	# read sensor input value
 	def read_sensor(self, pin, power, trigger_mode):
-		self._logger.info("reading pin %s " % pin)
+		self._logger.debug("reading pin %s " % pin)
 		self.pull_resistor(pin, power)
 		pin_value = GPIO.input(pin)
 		return (pin_value + power + trigger_mode) % 2 is 0
@@ -395,26 +395,30 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				self._plugin_manager.send_plugin_message(self._identifier, dict(type="info", autoClose=True,
 																				msg="Don't forget to configure this plugin."))
 
-		if event in (Events.PRINT_STARTED, Events.PRINT_RESUMED):
+		elif event in (Events.PRINT_STARTED, Events.PRINT_RESUMED):
 			self.changing_filament_initiated = False
 			self.changing_filament_command_sent = False
 			self.paused_for_user = False
 			self.printing = True
 
 			# print started with no filament present
-			if not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_STARTED:
-				self._logger.info("Printing aborted: no filament detected!")
-				self._printer.cancel_print()
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
-																				msg="No filament detected! Print cancelled."))
+			if event is Events.PRINT_STARTED:
+				self._logger.info("Starting print.")
+				if not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered):
+					self._logger.info("Printing aborted: no filament detected!")
+					self._printer.cancel_print()
+					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
+																					msg="No filament detected! Print cancelled."))
 			# print resumed with no filament present
-			elif not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered) and event is Events.PRINT_RESUMED:
-				self._logger.info("Resuming print aborted: no filament detected!")
-				self.send_out_of_filament()
-				self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
-																				msg="Resuming print aborted: no filament detected!"))
+			elif event is Events.PRINT_RESUMED:
+				self._logger.info("Resuming print.")
+				if not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered)
+					self._logger.info("Resuming print aborted: no filament detected!")
+					self.send_out_of_filament()
+					self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
+																					msg="Resuming print aborted: no filament detected!"))
 
-		if event in (
+		elif event in (
 				Events.PRINT_DONE,
 				Events.PRINT_FAILED,
 				Events.PRINT_CANCELLED,
