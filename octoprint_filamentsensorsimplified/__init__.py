@@ -128,11 +128,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 		if self.setting_cmd_action is 0:
 			self._logger.info("Sending out of filament GCODE: %s" % (self.setting_gcode))
 			self._printer.commands(self.setting_gcode)
+			self.changing_filament_initiated = True
 		elif self.setting_cmd_action is 1:
 			self._logger.info("Pausing print using OctoPrint native pause")
 			self._printer.commands('G1 X0 Y0')
 			self._printer.pause_print()
-		self.changing_filament_initiated = True
 
 	def sensor_callback(self, _):
 		self._logger.info("Sensor callback called")
@@ -159,10 +159,13 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 			self._settings.set(["pin"], 0)
 
 		if self.plugin_enabled(pin):
+			self._logger.info("Enabling filament sensor.")
+			self._logger.info("Mode is %s" % gpio_mode)
 			# BOARD
 			if gpio_mode is 10:
 				# if mode set by 3rd party don't set it again
 				if not self.gpio_mode_disabled:
+					self._logger.debug("Setting Board mode")
 					GPIO.cleanup()
 					GPIO.setmode(GPIO.BOARD)
 				# first check pins not in use already
@@ -178,18 +181,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 				if pin > 27:
 					return "", 556
 				# if mode set by 3rd party don't set it again
-				if not self.gpio_mode_disabled:
-					GPIO.cleanup()
-					GPIO.setmode(GPIO.BCM)
-
-			self._logger.info("Enabling filament sensor.")
-			self._logger.info("Mode is %s" % gpio_mode)
-			if gpio_mode is 10:
-				if not self.gpio_mode_disabled:
-					self._logger.debug("Setting Board mode")
-					GPIO.cleanup()
-					GPIO.setmode(GPIO.BOARD)
-			elif gpio_mode is 11:
 				if not self.gpio_mode_disabled:
 					self._logger.debug("Setting BCM mode")
 					GPIO.cleanup()
