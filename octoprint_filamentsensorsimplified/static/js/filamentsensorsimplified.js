@@ -11,37 +11,13 @@ $(function () {
             return this.gpio_mode_disabled() && !this.printing();
         }, this);
 
-        self.onAllBound = function(){
-            // First run
-            OctoPrint.simpleApiCommand("filamentsensorsimplified", "pollStatus", {}).done(function(response) {
-                if ('status' in response){
-                    self.updateIconStatus(response.status);
-                }
-            });
-            setInterval(function(){
-                OctoPrint.simpleApiCommand("filamentsensorsimplified", "pollStatus", {}).done(function(response) {
-                    if ('status' in response){
-                        self.updateIconStatus(response.status);
-                    }
-                });
-            }, 65000);
-        }
-
-        self.updateIconStatus = function(noFilament){
-            if (noFilament){
-                $('#navbar_plugin_filamentsensorsimplified a').html('<span class="fa-stack fa-1x"><i class="fas fa-life-ring fa-stack-1x"></i><i class="fas fa-ban fa-stack-2x text-error"></i></span>').attr('title','Filament NOT detected');
-            }else{
-                $('#navbar_plugin_filamentsensorsimplified a').html('<i class="fas fa-life-ring fa-lg"></i>').attr('title','Filament detected');
-            }
-        }
-
         self.onDataUpdaterPluginMessage = function (plugin, data) {
             if (plugin !== "filamentsensorsimplified") {
                 return;
             }
 
             // Update icon
-            if (data.type == "iconStatus"){
+            if (data.type == "filamentStatus"){
                 self.updateIconStatus(data.noFilament);
                 return;
             }
@@ -53,6 +29,14 @@ $(function () {
                 hide: data.autoClose
             });
 
+        }
+
+        self.updateIconStatus = function(noFilament){
+            if (noFilament){
+                $('#navbar_plugin_filamentsensorsimplified a').html('<span class="fa-stack fa-1x"><i class="fas fa-life-ring fa-stack-1x"></i><i class="fas fa-ban fa-stack-2x text-error"></i></span>').attr('title','Filament NOT detected');
+            } else {
+                $('#navbar_plugin_filamentsensorsimplified a').html('<i class="fas fa-life-ring fa-lg"></i>').attr('title','Filament detected');
+            }
         }
 
         self.testSensor = function () {
@@ -91,31 +75,20 @@ $(function () {
                         self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> There was an error :(');
                     },
                     success: function (result) {
-                        // triggered when open
-                        if ($("#filamentsensorsimplified_settings_triggeredInput").val() === "0") {
-                            if (result.triggered === true) {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("alert-success");
-                                self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
-                            } else {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("alert-info");
-                                self.testSensorResult('<i class="icon-stop"></i> Sensor triggered!')
-                            }
-                        // triggered when closed
-                        } else {
-                            if (result.triggered === true) {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("alert-success");
-                                self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor triggered!');
-                            } else {
-                                $("#filamentsensorsimplified_settings_testResult").addClass("alert-info");
-                                self.testSensorResult('<i class="icon-stop"></i> Sensor detected filament or not working!')
-                            }
+                        if (result.triggered === 0) {
+                            $("#filamentsensorsimplified_settings_testResult").addClass("alert-success");
+                            self.testSensorResult('<i class="fas icon-ok fa-check"></i> Sensor detected filament!');
+                        } else if (result.triggered === 1) {
+                            $("#filamentsensorsimplified_settings_testResult").addClass("alert-info");
+                            self.testSensorResult('<i class="icon-stop"></i> Sensor triggered!')
                         }
-                    },
+                    }
                 }
             ).always(function(){
                 $("#filamentsensorsimplified_settings_testResult").fadeIn();
             });
         }
+
         self.checkWarningPullUp = function(event){
             // Which mode are we using
             var mode = parseInt($('#filamentsensorsimplified_settings_gpioMode').val(),10);
