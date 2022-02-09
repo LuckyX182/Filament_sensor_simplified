@@ -136,7 +136,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
     def sensor_callback(self, _):
         self._logger.info("Sensor callback called")
-        self._logger.info("set pin %s " % self.setting_pin)
         filamentPresentInt = self.is_filament_present(self.setting_pin, self.setting_power, self.setting_triggered)
         self._logger.info("filament present int %s " % filamentPresentInt)
         if filamentPresentInt is 1:
@@ -295,7 +294,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
     def sending_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
-        self._logger.debug("sending gcode")
         if self.changing_filament_initiated:
             if self.changing_filament_command_sent and self.changing_filament_started:
                 # M113 - host keepalive message, ignore this message
@@ -314,7 +312,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self.changing_filament_command_sent = True
 
     def gcode_response_received(self, comm, line, *args, **kwargs):
-        self._logger.debug("receiving gcode")
         if self.changing_filament_command_sent:
             if re.search("busy: paused for user", line):
                 self._logger.debug("received busy paused for user")
@@ -446,7 +443,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 __plugin_pythoncompat__ = ">=2.7,<4"  # python 2 and 3
 
 __plugin_name__ = "Filament Sensor Simplified"
-__plugin_version__ = "0.2.3"
+__plugin_version__ = "0.3.0"
 
 
 def __plugin_check__():
