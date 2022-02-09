@@ -140,7 +140,6 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
     def sensor_callback(self, _):
         self._logger.info("Sensor callback called")
         filamentPresentInt = self.is_filament_present(self.setting_pin, self.setting_power, self.setting_triggered)
-        self._logger.info("filament present int %s " % filamentPresentInt)
         if filamentPresentInt is 1:
             self._logger.info("Sensor was triggered")
             if not self.changing_filament_initiated and self.printing:
@@ -157,7 +156,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
     def init_gpio(self, gpio_mode, pin, power, trigger_mode):
         # Fix old -1 settings to 0
         if pin is -1:
-            self._logger.info("Fixing old settings from -1 to 0")
+            self._logger.debug("Fixing old settings from -1 to 0")
             self._settings.set(["pin"], 0)
 
         if self.plugin_enabled(pin):
@@ -167,7 +166,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             if gpio_mode is 10:
                 # if mode set by 3rd party don't set it again
                 if not self.gpio_mode_disabled:
-                    self._logger.debug("Setting Board mode")
+                    self._logger.info("Setting Board mode")
                     GPIO.cleanup()
                     GPIO.setmode(GPIO.BOARD)
                 # first check pins not in use already
@@ -301,16 +300,20 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             if self.changing_filament_command_sent and self.changing_filament_started:
                 # M113 - host keepalive message, ignore this message
                 if not re.search("^M113", cmd):
+                    self._logger.debug("filament change sequence ended")
                     self.changing_filament_initiated = False
                     self.changing_filament_command_sent = False
                     self.changing_filament_started = False
-                    if self.read_sensor(self.setting_pin, self.setting_power, self.setting_triggered):
+                    if not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered):
+                        self._logger.debug("reading sensor after change")
                         self.send_out_of_filament()
             if cmd == self.setting_gcode:
+                self._logger.debug("about to send out of filament g-code")
                 self.changing_filament_command_sent = True
 
         # deliberate change
         if re.search("^M600", cmd):
+            self._logger.info("deliberate M600 was initiated")
             self.changing_filament_initiated = True
             self.changing_filament_command_sent = True
 
