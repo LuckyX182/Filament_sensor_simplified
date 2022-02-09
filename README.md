@@ -60,13 +60,18 @@ If you find it useful and like it, you can support me by clicking the button bel
 
 [![More coffee, more code](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=5L758LYSUGHW4&source=url)
 
+Have a good one
+
+Luke
+
 ## Screenshots
 
 Plugin settings:
 ![plugin_settings](screenshots/settings.png "Plugin settings")
 
-Navbar icon:
-![plugin_settings](screenshots/navbar-icon.png "Plugin settings")
+Navbar icons:
+![plugin_settings](screenshots/navbar-icon1.png "Plugin settings")
+![plugin_settings](screenshots/navbar-icon2.png "Plugin settings")
 
 No configuration pop-up:
 ![no_config_pop-up](screenshots/no_conf_popup.png "No configuration pop-up")
@@ -79,3 +84,7 @@ Filament runout pop-up:
 
 Waiting for user input pop-up:
 ![user_input_popup](screenshots/waiting_for_user_input.png "User input required pop-up")
+
+## Maintainers wanted
+
+As I don't have much time for this plugin anymore any help on maintaining the plugin will be greatly appreciated. I will only do basic maintenance.
