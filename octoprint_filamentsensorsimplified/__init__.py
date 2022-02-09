@@ -289,8 +289,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
                                                                                     msg="Filament sensor settings not saved, you are trying to use a pin which is ground/power pin or out of range"))
                     return
-        self.init_gpio(gpio_mode_to_save, pin_to_save, power_to_save, trigger_mode_to_save)
-        self.init_icon(pin_to_save, power_to_save, trigger_mode_to_save)
+                self.init_gpio(gpio_mode_to_save, pin_to_save, power_to_save, trigger_mode_to_save)
+                self.init_icon(pin_to_save, power_to_save, trigger_mode_to_save)
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
     def sending_gcode(self, comm_instance, phase, cmd, cmd_type, gcode, subcode=None, tags=None, *args, **kwargs):
@@ -389,7 +389,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self.printing = True
 
             # print started with no filament present
-            if event is Events.PRINT_STARTED:
+            if event is Events.PRINT_STARTED and self.plugin_enabled(self.setting_pin):
                 self._logger.info("Starting print.")
                 if not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered):
                     self._logger.info("Printing aborted: no filament detected!")
@@ -397,7 +397,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
                                                                                     msg="No filament detected! Print cancelled."))
             # print resumed with no filament present
-            elif event is Events.PRINT_RESUMED:
+            elif event is Events.PRINT_RESUMED and self.plugin_enabled(self.setting_pin):
                 self._logger.info("Resuming print.")
                 if not self.read_sensor_multiple(self.setting_pin, self.setting_power, self.setting_triggered):
                     self._logger.info("Resuming print aborted: no filament detected!")
