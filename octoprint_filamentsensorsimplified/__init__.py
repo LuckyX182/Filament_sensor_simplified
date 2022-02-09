@@ -102,6 +102,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             mode = int(data.get("mode"))
             triggered_mode = int(data.get("triggered"))
 
+            if selected_pin is 0:
+                return "", 556
+
             self.init_gpio(mode, selected_pin, selected_power, triggered_mode)
             triggered_int = self.is_filament_present(selected_pin, selected_power, triggered_mode)
             self.init_gpio(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered)
