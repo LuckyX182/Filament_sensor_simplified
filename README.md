@@ -41,6 +41,8 @@ by the "Broadcom SOC channel", if this is selected by 3rd party, this option wil
 
 Default pin is 0 (not configured) and ground (as it is safer, read below).
 
+After configuring it is best to restart Octoprint and check if the filament change works correctly to avoid any problems.
+
 **WARNING! Never connect the switch input to 5V as it could fry the GPIO section of your Raspberry!**
 
 #### Advice
