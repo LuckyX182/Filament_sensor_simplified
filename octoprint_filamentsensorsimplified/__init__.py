@@ -124,7 +124,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
     def show_printer_runout_popup(self):
         self._plugin_manager.send_plugin_message(self._identifier,
-                                                 dict(type="info", autoClose=False, msg="Printer ran out of filament!"))
+                                                 dict(type="error", autoClose=False, msg="Printer ran out of filament!"))
 
     def send_out_of_filament(self):
         self.show_printer_runout_popup()
