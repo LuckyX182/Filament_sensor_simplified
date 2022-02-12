@@ -107,9 +107,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             if selected_pin is 0:
                 return "", 556
 
-            self.init_gpio(mode, selected_pin, selected_power, triggered_mode)
+            self.init_gpio(mode, selected_pin, selected_power, triggered_mode, True)
             triggered_int = self.is_filament_present(selected_pin, selected_power, triggered_mode)
-            self.init_gpio(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered)
+            self.init_gpio(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered, True)
             return flask.jsonify(triggered=triggered_int)
         except ValueError as e:
             self._logger.error(str(e))
@@ -155,7 +155,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self._plugin_manager.send_plugin_message(self._identifier, dict(type="filamentStatus", noFilament=False,
                                                                             msg="Filament inserted!"))
 
-    def init_gpio(self, gpio_mode, pin, power, trigger_mode):
+    def init_gpio(self, gpio_mode, pin, power, trigger_mode, test):
         self._logger.info("Initializing GPIO.")
         preset_gpio_mode = GPIO.getmode()
         if preset_gpio_mode is not None:
@@ -196,42 +196,42 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     self._logger.debug("Setting BCM mode")
                     GPIO.cleanup()
                     GPIO.setmode(GPIO.BCM)
+            if not test:
+                # 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
+                if power is 0:
+                    self.pull_resistor(pin, power)
+                    # triggered when open
+                    if trigger_mode is 0:
+                        self._logger.debug("Reacting to rising edge")
+                        GPIO.add_event_detect(
+                            pin, GPIO.RISING,
+                            callback=self.sensor_callback,
+                            bouncetime=self.bounce_time)
+                    # triggered when closed
+                    else:
+                        self._logger.debug("Reacting to falling edge")
+                        GPIO.add_event_detect(
+                            pin, GPIO.FALLING,
+                            callback=self.sensor_callback,
+                            bouncetime=self.bounce_time)
 
-            # 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
-            if power is 0:
-                self.pull_resistor(pin, power)
-                # triggered when open
-                if trigger_mode is 0:
-                    self._logger.debug("Reacting to rising edge")
-                    GPIO.add_event_detect(
-                        pin, GPIO.RISING,
-                        callback=self.sensor_callback,
-                        bouncetime=self.bounce_time)
-                # triggered when closed
+                # 1 = sensor is powered, react to falling edge pulled down by pull down resistor
                 else:
-                    self._logger.debug("Reacting to falling edge")
-                    GPIO.add_event_detect(
-                        pin, GPIO.FALLING,
-                        callback=self.sensor_callback,
-                        bouncetime=self.bounce_time)
-
-            # 1 = sensor is powered, react to falling edge pulled down by pull down resistor
-            else:
-                self.pull_resistor(pin, power)
-                # triggered when open
-                if trigger_mode is 0:
-                    self._logger.debug("Reacting to falling edge")
-                    GPIO.add_event_detect(
-                        pin, GPIO.FALLING,
-                        callback=self.sensor_callback,
-                        bouncetime=self.bounce_time)
-                # triggered when closed
-                else:
-                    self._logger.debug("Reacting to rising edge")
-                    GPIO.add_event_detect(
-                        pin, GPIO.RISING,
-                        callback=self.sensor_callback,
-                        bouncetime=self.bounce_time)
+                    self.pull_resistor(pin, power)
+                    # triggered when open
+                    if trigger_mode is 0:
+                        self._logger.debug("Reacting to falling edge")
+                        GPIO.add_event_detect(
+                            pin, GPIO.FALLING,
+                            callback=self.sensor_callback,
+                            bouncetime=self.bounce_time)
+                    # triggered when closed
+                    else:
+                        self._logger.debug("Reacting to rising edge")
+                        GPIO.add_event_detect(
+                            pin, GPIO.RISING,
+                            callback=self.sensor_callback,
+                            bouncetime=self.bounce_time)
         else:
             self._logger.info("Sensor disabled")
 
@@ -247,7 +247,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
     def on_after_startup(self):
         self._logger.info("Filament Sensor Simplified started")
-        self.init_gpio(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered)
+        self.init_gpio(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered, False)
         self.gpio_initialized = True
 
     def on_settings_save(self, data):
@@ -302,7 +302,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     self._plugin_manager.send_plugin_message(self._identifier, dict(type="error", autoClose=True,
                                                                                     msg="Filament sensor settings not saved, you are trying to use a pin which is ground/power pin or out of range"))
                     return
-                self.init_gpio(gpio_mode_to_save, pin_to_save, power_to_save, trigger_mode_to_save)
+                self.init_gpio(gpio_mode_to_save, pin_to_save, power_to_save, trigger_mode_to_save, False)
                 self.init_icon(pin_to_save, power_to_save, trigger_mode_to_save)
         octoprint.plugin.SettingsPlugin.on_settings_save(self, data)
 
