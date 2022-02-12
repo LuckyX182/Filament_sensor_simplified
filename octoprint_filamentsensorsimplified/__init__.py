@@ -161,6 +161,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         if preset_gpio_mode is not None:
             self.gpio_mode_disabled = True
             gpio_mode = preset_gpio_mode
+            self._settings.set(["gpio_mode"], preset_gpio_mode)
         else:
             self._logger.info("Preset mode is %s" % preset_gpio_mode)
 
