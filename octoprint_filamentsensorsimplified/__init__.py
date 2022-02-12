@@ -28,6 +28,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
     # printing flag
     printing = False
 
+    gpio_initialized = False
+
     def initialize(self):
         GPIO.setwarnings(True)
         # flag defining that the filament change command has been sent to printer, this does not however mean that
@@ -154,6 +156,14 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                                                             msg="Filament inserted!"))
 
     def init_gpio(self, gpio_mode, pin, power, trigger_mode):
+        self._logger.info("Initializing GPIO.")
+        preset_gpio_mode = GPIO.getmode()
+        if preset_gpio_mode is not None:
+            self.gpio_mode_disabled = True
+            gpio_mode = preset_gpio_mode
+        else:
+            self._logger.info("Preset mode is %s" % preset_gpio_mode)
+
         # Fix old -1 settings to 0
         if pin is -1:
             self._logger.debug("Fixing old settings from -1 to 0")
@@ -238,6 +248,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
     def on_after_startup(self):
         self._logger.info("Filament Sensor Simplified started")
         self.init_gpio(self.setting_gpio_mode, self.setting_pin, self.setting_power, self.setting_triggered)
+        self.gpio_initialized = True
 
     def on_settings_save(self, data):
         # Retrieve any settings not changed in order to validate that the combination of new and old settings end up in a bad combination
@@ -333,6 +344,8 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         return line
 
     def init_icon(self, pin, power, triggered):
+        if not self.gpio_initialized:
+            return
         self._logger.info("Setting icon status")
         iconPresent = self.is_filament_present(pin, power, triggered)
         self._plugin_manager.send_plugin_message(self._identifier,
