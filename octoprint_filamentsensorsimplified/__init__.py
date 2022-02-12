@@ -198,41 +198,44 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                     GPIO.cleanup()
                     GPIO.setmode(GPIO.BCM)
             if not test:
-                # 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
-                if power is 0:
-                    self.pull_resistor(pin, power)
-                    # triggered when open
-                    if trigger_mode is 0:
-                        self._logger.debug("Reacting to rising edge")
-                        GPIO.add_event_detect(
-                            pin, GPIO.RISING,
-                            callback=self.sensor_callback,
-                            bouncetime=self.bounce_time)
-                    # triggered when closed
-                    else:
-                        self._logger.debug("Reacting to falling edge")
-                        GPIO.add_event_detect(
-                            pin, GPIO.FALLING,
-                            callback=self.sensor_callback,
-                            bouncetime=self.bounce_time)
+                try:
+                    # 0 = sensor is grounded, react to rising edge pulled up by pull up resistor
+                    if power is 0:
+                        self.pull_resistor(pin, power)
+                        # triggered when open
+                        if trigger_mode is 0:
+                            self._logger.debug("Reacting to rising edge")
+                            GPIO.add_event_detect(
+                                pin, GPIO.RISING,
+                                callback=self.sensor_callback,
+                                bouncetime=self.bounce_time)
+                        # triggered when closed
+                        else:
+                            self._logger.debug("Reacting to falling edge")
+                            GPIO.add_event_detect(
+                                pin, GPIO.FALLING,
+                                callback=self.sensor_callback,
+                                bouncetime=self.bounce_time)
 
-                # 1 = sensor is powered, react to falling edge pulled down by pull down resistor
-                else:
-                    self.pull_resistor(pin, power)
-                    # triggered when open
-                    if trigger_mode is 0:
-                        self._logger.debug("Reacting to falling edge")
-                        GPIO.add_event_detect(
-                            pin, GPIO.FALLING,
-                            callback=self.sensor_callback,
-                            bouncetime=self.bounce_time)
-                    # triggered when closed
+                    # 1 = sensor is powered, react to falling edge pulled down by pull down resistor
                     else:
-                        self._logger.debug("Reacting to rising edge")
-                        GPIO.add_event_detect(
-                            pin, GPIO.RISING,
-                            callback=self.sensor_callback,
-                            bouncetime=self.bounce_time)
+                        self.pull_resistor(pin, power)
+                        # triggered when open
+                        if trigger_mode is 0:
+                            self._logger.debug("Reacting to falling edge")
+                            GPIO.add_event_detect(
+                                pin, GPIO.FALLING,
+                                callback=self.sensor_callback,
+                                bouncetime=self.bounce_time)
+                        # triggered when closed
+                        else:
+                            self._logger.debug("Reacting to rising edge")
+                            GPIO.add_event_detect(
+                                pin, GPIO.RISING,
+                                callback=self.sensor_callback,
+                                bouncetime=self.bounce_time)
+                except RuntimeError as e:
+                    self._logger.warn(str(e))
         else:
             self._logger.info("Sensor disabled")
 
