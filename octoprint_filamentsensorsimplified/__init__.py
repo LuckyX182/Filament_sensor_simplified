@@ -358,22 +358,25 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
     def read_sensor_multiple(self, pin, power, trigger_mode):
         self._logger.info("Reading sensor values")
-        oldTrigger = self.read_sensor(pin, power, trigger_mode)
-        readFinished = False
-        newTrigger = False
+        oldTrigger = None
+        x = 0
 
         # take a reading of 10 consecutive reads to prevent false positives
-        while not readFinished:
-            for x in range(0, 10):
-                sleep(0.2)
-                newTrigger = self.read_sensor(pin, power, trigger_mode)
-                if oldTrigger != newTrigger:
-                    self._logger.info("Repeating sensor read due to false positives")
-                    break
-                oldTrigger = newTrigger
-            readFinished = True
+        while True:
+            newTrigger = self.read_sensor(pin, power, trigger_mode)
+            x += 1
 
-        return newTrigger
+            if oldTrigger is None:
+                oldTrigger = newTrigger
+            elif oldTrigger != newTrigger:
+                x = 0
+                self._logger.info("Repeating sensor read due to false positives")
+
+            if x < 10:
+                sleep(0.2)
+            else:
+                self._logger.info("Reading result: %s" % newTrigger)
+                return newTrigger
 
     # plugin disabled if pin set to 0
     def plugin_enabled(self, pin):
