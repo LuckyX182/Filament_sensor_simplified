@@ -13,3 +13,8 @@
 	animation: pulsate 1s ease-out;
     animation-iteration-count: 1;
 }
+
+#filamentsensorsimplified_settings_commandInput{
+	min-height: 30px;
+	resize: vertical;
+}
