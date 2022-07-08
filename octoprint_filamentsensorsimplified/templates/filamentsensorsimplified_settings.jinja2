@@ -79,10 +79,11 @@
         </div>
 
         <br/>
-        <label class="control-label" for="filamentsensorsimplified_settings_commandInput" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">{{ _('G-code') }}</label>
+        <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('G-code') }}</label>
         <div class="controls">
             <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
-            <span class="help-block">Which G-code will be sent to printer on filament runout.</span>
+            <span class="help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">Which G-code will be sent to printer on filament runout.</span>
+            <span class="help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 1">Which G-code will be sent to printer before pausing print.</span>
         </div>
 
     </div>
@@ -94,5 +95,6 @@
     <br>
 
     <p>For more information click <a target="_blank" href="https://github.com/LuckyX182/Filament_sensor_simplified">here</a></p>
+    <a href="https://www.printables.com/social/11728-lukes-3d/models"><img src="/image/Luke's 3D new logo no background black cropped.png"></a>
 
 </form>
