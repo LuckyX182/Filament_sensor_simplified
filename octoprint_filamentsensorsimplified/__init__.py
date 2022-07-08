@@ -136,7 +136,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self.changing_filament_initiated = True
         elif self.setting_cmd_action is 1:
             self._logger.info("Pausing print using OctoPrint native pause")
-            self._printer.commands('G1 X0 Y0')
+            self._printer.commands(self.setting_gcode)
             self._printer.pause_print()
 
     def sensor_callback(self, _):
