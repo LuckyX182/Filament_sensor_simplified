@@ -372,9 +372,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                 x = 0
                 self._logger.info("Repeating sensor read due to false positives")
 
-            if x < 10:
-                sleep(0.2)
-            else:
+            if x >= 10:
                 self._logger.info("Reading result: %s" % newTrigger)
                 return newTrigger
 
