@@ -33,9 +33,9 @@ $(function () {
 
         self.updateIconStatus = function(noFilament){
             if (noFilament){
-                $('#navbar_plugin_filamentsensorsimplified a').html('<span class="fa-stack fa-1x"><i class="fas fa-life-ring fa-stack-1x"></i><i class="fas fa-ban fa-stack-2x text-error"></i></span>').attr('title','Filament NOT detected');
+                $('#navbar_plugin_filamentsensorsimplified a').html('<i class="fas fa-life-ring fa-lg red-color"></i>').attr('title','Filament NOT detected');
             } else {
-                $('#navbar_plugin_filamentsensorsimplified a').html('<i class="fas fa-life-ring fa-lg"></i>').attr('title','Filament detected');
+                $('#navbar_plugin_filamentsensorsimplified a').html('<i class="fas fa-life-ring fa-lg green-color"></i>').attr('title','Filament detected');
             }
         }
 
