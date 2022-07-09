@@ -16,7 +16,7 @@ Let's check some features:
 * pin validation so you don't accidentally save wrong pin number
 * detection of used GPIO mode - this makes it compatible with other plugins
 * handles delibrate M600 filament change
-* if your printer doesn't support M600 you have option to use Octoprint pause and the plugin will park the head to X0 Y0
+* if your printer doesn't support M600 you have option to use Octoprint pause
 * runs on OctoPrint 1.3.0 and higher
 
 **NOTE: this plugin won't work if you use OctoPrint only to start printing from SD card**
