@@ -69,6 +69,7 @@
     </div>
 
     <h4>{{ _('Filament run out action') }}</h4>
+
     <div class="control-group">
         <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('Action') }}</label>
         <div class="controls">
@@ -82,10 +83,9 @@
         <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('G-code') }}</label>
         <div class="controls">
             <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
-            <span class="help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">Which G-code will be sent to printer on filament runout.</span>
-            <span class="help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 1">Which G-code will be sent to printer before pausing print.</span>
+            <span class="margin-top10 help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">Which G-code will be sent to printer on filament runout.</span>
+            <span class="margin-top10 help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 1">Which G-code will be sent to printer before pausing print.</span>
         </div>
-
     </div>
 
     <div class="alert alert-info hidden" id="filamentsensorsimplified_settings_pullupwarn">
@@ -95,8 +95,7 @@
     <br>
 
     <div>
-        <p style="float: left">For more information click <a target="_blank" href="https://github.com/LuckyX182/Filament_sensor_simplified">here</a></p>
-        <a href="https://linktr.ee/lukes3d"><img src="/plugin/filamentsensorsimplified/static/img/Luke's 3D new logo no background black cropped.png" width="80" style="float: right; padding-right: 20px"></a>
+        <p class="left margin-top10 left">For more information click <a target="_blank" href="https://github.com/LuckyX182/Filament_sensor_simplified">here</a></p>
+        <a href="https://linktr.ee/lukes3d"><img src="/plugin/filamentsensorsimplified/static/img/Luke's 3D new logo no background black cropped.png" width="80" class="logo"></a>
     </div>
-
 </form>

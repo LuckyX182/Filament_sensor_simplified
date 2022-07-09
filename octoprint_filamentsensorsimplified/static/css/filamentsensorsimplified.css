@@ -15,9 +15,22 @@
 }
 
 .red-color {
-    color: #fc0303
+    color: #fc0303;
 }
 
 .green-color {
-    color: #19bf21
+    color: #19bf21;
+}
+
+.margin-top10 {
+    margin-top: 10px;
+}
+
+.left {
+    float: left;
+}
+
+.logo {
+    padding-right: 20px;
+    float: right;
 }
