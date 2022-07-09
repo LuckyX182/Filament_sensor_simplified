@@ -36,8 +36,8 @@ by the "Broadcom SOC channel", if this is selected by 3rd party, this option wil
 2. **pin number** - pin number based on selected mode
 3. **power input to sensor** - input is connected to **ground or 3.3 V**
 4. **switch type** - switch should be **triggered when opened** (input of the sensor doesn't transfer to its output) or **triggered when closed** (input of the sensor is transferred to its output)
-5. **runout action** - choose whether you want or send **M600 X0 Y0 or other G-code** or use **Octoprint pause**
-5. **g-code** to send to printer on filament runout - default is M600 X0 Y0
+5. **runout action** - choose whether you want to **send G-code** to printer or use **Octoprint pause** on filament runout
+5. **g-code** to send to printer on filament runout / before OctoPrint pause - default is M600 X0 Y0
 
 Default pin is 0 (not configured) and ground (as it is safer, read below).
 
