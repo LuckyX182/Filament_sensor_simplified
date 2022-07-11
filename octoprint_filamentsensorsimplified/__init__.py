@@ -467,7 +467,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 __plugin_pythoncompat__ = ">=2.7,<4"  # python 2 and 3
 
 __plugin_name__ = "Filament Sensor Simplified"
-__plugin_version__ = "0.3.2"
+__plugin_version__ = "0.3.3"
 
 
 def __plugin_check__():
