@@ -70,9 +70,10 @@ $(function () {
                             self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> The pin selected is power, ground or out of range pin number, choose other pin');
                         }
                     },
-                    error: function () {
+                    error: function (jqXHR) {
+                        console.log(JSON.stringify(jqXHR));
                         $("#filamentsensorsimplified_settings_testResult").addClass("alert-error");
-                        self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> There was an error :(');
+                        self.testSensorResult('<i class="fas icon-warning-sign fa-exclamation-triangle"></i> There was an error &#128542 (check browser console for details)');
                     },
                     success: function (result) {
                         if (result.triggered === 0) {
