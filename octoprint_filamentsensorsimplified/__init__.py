@@ -86,6 +86,10 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             cmd_action=0
         )
 
+    # Custom events hook
+    def get_custom_events(*args, **kwargs):
+        return ["open", "closed"]
+
     # simpleApiPlugin
     def get_api_commands(self):
         return dict(testSensor=["pin", "power"])
@@ -144,6 +148,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
         filamentPresentInt = self.is_filament_present(self.setting_pin, self.setting_power, self.setting_triggered)
         if filamentPresentInt is 1:
             self._logger.info("Sensor was triggered")
+            self._event_bus.fire(Events.PLUGIN_FILAMENTSENSORSIMPLIFIED_CLOSED)
             if not self.changing_filament_initiated and self.printing:
                 self.send_out_of_filament()
             # change navbar icon to filament runout
@@ -151,6 +156,7 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                                                             msg="Printer ran out of filament!"))
         elif filamentPresentInt is 0:
             self._logger.info("Sensor was not triggered")
+            self._event_bus.fire(Events.PLUGIN_FILAMENTSENSORSIMPLIFIED_OPEN)
             # change navbar icon to filament present
             self._plugin_manager.send_plugin_message(self._identifier, dict(type="filamentStatus", noFilament=False,
                                                                             msg="Filament inserted!"))
@@ -488,5 +494,6 @@ def __plugin_load__():
     __plugin_hooks__ = {
         "octoprint.plugin.softwareupdate.check_config": __plugin_implementation__.get_update_information,
         "octoprint.comm.protocol.gcode.received": __plugin_implementation__.gcode_response_received,
-        "octoprint.comm.protocol.gcode.sending": __plugin_implementation__.sending_gcode
+        "octoprint.comm.protocol.gcode.sending": __plugin_implementation__.sending_gcode,
+        "octoprint.events.register_custom_events": __plugin_implementation__.get_custom_events
     }
