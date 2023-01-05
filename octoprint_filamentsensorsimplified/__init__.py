@@ -370,7 +370,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                 oldTrigger = newTrigger
             elif oldTrigger != newTrigger:
                 x = 0
-                self._logger.info("Repeating sensor read due to false positives")
+                # Commenting out this info log due to spamming the log file and filling up the memory quickly.
+                # See https://github.com/LuckyX182/Filament_sensor_simplified/issues/64
+                #self._logger.info("Repeating sensor read due to false positives")
 
             if x >= 10:
                 self._logger.info("Reading result: %s" % newTrigger)
