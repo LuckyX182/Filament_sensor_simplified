@@ -418,6 +418,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self.paused_for_user = False
             self.printing = True
 
+            if self.setting_cmd_action is 2: # "Do nothing" cmd option
+                return
+
             # print started with no filament present
             if event is Events.PRINT_STARTED and self.plugin_enabled(self.setting_pin):
                 self._logger.info("Starting print.")
