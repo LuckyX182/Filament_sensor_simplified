@@ -122,7 +122,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
     def is_filament_present(self, pin, power, triggered_mode):
         if self.read_sensor_multiple(pin, power, triggered_mode):
-            self._logger.info("Filament detected")
+            # Commenting out this info log due to spamming the log file and filling up the memory quickly.
+            # See https://github.com/LuckyX182/Filament_sensor_simplified/issues/64
+            #self._logger.info("Filament detected")
             return 0
         else:
             self._logger.info("Filament not detected")
@@ -144,7 +146,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self._printer.pause_print()
 
     def sensor_callback(self, _):
-        self._logger.info("Sensor callback called")
+        # Commenting out this info log due to spamming the log file and filling up the memory quickly.
+        # See https://github.com/LuckyX182/Filament_sensor_simplified/issues/64
+        #self._logger.info("Sensor callback called")
         filamentPresentInt = self.is_filament_present(self.setting_pin, self.setting_power, self.setting_triggered)
         if filamentPresentInt is 1:
             self._logger.info("Sensor was triggered")
@@ -155,8 +159,11 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
             self._plugin_manager.send_plugin_message(self._identifier, dict(type="filamentStatus", noFilament=True,
                                                                             msg="Printer ran out of filament!"))
         elif filamentPresentInt is 0:
-            self._logger.info("Sensor was not triggered")
+            # Commenting out this info log due to spamming the log file and filling up the memory quickly.
+            # See https://github.com/LuckyX182/Filament_sensor_simplified/issues/64
+            #self._logger.info("Sensor was not triggered")
             self._event_bus.fire(Events.PLUGIN_FILAMENTSENSORSIMPLIFIED_OPEN)
+
             # change navbar icon to filament present
             self._plugin_manager.send_plugin_message(self._identifier, dict(type="filamentStatus", noFilament=False,
                                                                             msg="Filament inserted!"))
@@ -363,7 +370,9 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                                                       msg="Initial filament read"))
 
     def read_sensor_multiple(self, pin, power, trigger_mode):
-        self._logger.info("Reading sensor values")
+        # Commenting out this info log due to spamming the log file and filling up the memory quickly.
+        # See https://github.com/LuckyX182/Filament_sensor_simplified/issues/64
+        #self._logger.info("Reading sensor values")
         oldTrigger = None
         x = 0
 
@@ -376,10 +385,14 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
                 oldTrigger = newTrigger
             elif oldTrigger != newTrigger:
                 x = 0
-                self._logger.info("Repeating sensor read due to false positives")
+                # Commenting out this info log due to spamming the log file and filling up the memory quickly.
+                # See https://github.com/LuckyX182/Filament_sensor_simplified/issues/64
+                #self._logger.info("Repeating sensor read due to false positives")
 
             if x >= 10:
-                self._logger.info("Reading result: %s" % newTrigger)
+                # Commenting out this info log due to spamming the log file and filling up the memory quickly.
+                # See https://github.com/LuckyX182/Filament_sensor_simplified/issues/64
+                #self._logger.info("Reading result: %s" % newTrigger)
                 return newTrigger
 
     # plugin disabled if pin set to 0
@@ -458,12 +471,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
                 # version check: github repository
                 type="github_release",
-                user="luckyx182",
+                user="valemaio2",
                 repo="Filament_sensor_simplified",
                 current=self._plugin_version,
 
                 # update method: pip
-                pip="https://github.com/luckyx182/Filament_sensor_simplified/archive/{target_version}.zip"
+                pip="https://github.com/valemaio2/Filament_sensor_simplified/archive/{target_version}.zip"
             )
         )
 
@@ -500,3 +513,4 @@ def __plugin_load__():
         "octoprint.comm.protocol.gcode.sending": __plugin_implementation__.sending_gcode,
         "octoprint.events.register_custom_events": __plugin_implementation__.get_custom_events
     }
+

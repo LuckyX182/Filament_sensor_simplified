@@ -1,3 +1,7 @@
+## Please note:
+
+This is a fork of the [original Filament Sensor Simplified plugin.](https://github.com/LuckyX182/Filament_sensor_simplified)
+
 # Filament sensor simplified
 
 This plugin reacts to short lever microswitch output like [this](https://chinadaier.en.made-in-china.com/product/ABVJkvyMAqcT/China-1A-125VAC-on-off-Kw10-Mini-Micro-Mouse-Switch.html)
@@ -52,19 +56,6 @@ You might experience the same problem as I experienced - the sensor was randomly
 To solve this connect a shielded wire to your sensor and ground the shielding, ideally on both ends.
 
 If you are unsure about your sensor being triggered, check [OctoPrint logs](https://community.octoprint.org/t/where-can-i-find-octoprints-and-octopis-log-files/299)
-
-## Support me
-
-![Luke's 3D](screenshots/Lukes_3D_logo.png "Luke's 3D")
-
-This plugin was developed in my spare time.
-If you find it useful and like it, you can support me by clicking the button below :)
-
-[![More coffee, more code](https://www.paypalobjects.com/en_US/i/btn/btn_donate_SM.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=5L758LYSUGHW4&source=url)
-
-Have a good one
-
-Luke
 
 ## Screenshots
 
