@@ -461,12 +461,12 @@ class Filament_sensor_simplifiedPlugin(octoprint.plugin.StartupPlugin,
 
                 # version check: github repository
                 type="github_release",
-                user="luckyx182",
+                user="valemaio2",
                 repo="Filament_sensor_simplified",
                 current=self._plugin_version,
 
                 # update method: pip
-                pip="https://github.com/luckyx182/Filament_sensor_simplified/archive/{target_version}.zip"
+                pip="https://github.com/valemaio2/Filament_sensor_simplified/archive/{target_version}.zip"
             )
         )
 
