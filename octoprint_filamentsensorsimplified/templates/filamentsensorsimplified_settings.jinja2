@@ -76,15 +76,18 @@
             <select data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action, disable:printing" required>
                 <option value=0>{{ _('Send G-code') }}</option>
                 <option value=1>{{ _('OctoPrint pause') }}</option>
+                <option value=2>{{ _('Do nothing') }}</option>
             </select>
         </div>
 
         <br/>
-        <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('G-code') }}</label>
-        <div class="controls">
-            <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
-            <span class="margin-top10 help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">Which G-code will be sent to printer on filament runout.</span>
-            <span class="margin-top10 help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 1">Which G-code will be sent to printer before pausing print.</span>
+        <div data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() != 2">
+            <label class="control-label" for="filamentsensorsimplified_settings_commandInput">{{ _('G-code') }}</label>
+            <div class="controls">
+                <input id="filamentsensorsimplified_settings_commandInput" type="text" class="input-large" data-bind="value: settingsViewModel.settings.plugins.filamentsensorsimplified.g_code, disable:printing">
+                <span class="margin-top10 help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 0">Which G-code will be sent to printer on filament runout.</span>
+                <span class="margin-top10 help-block" data-bind="visible: settingsViewModel.settings.plugins.filamentsensorsimplified.cmd_action() == 1">Which G-code will be sent to printer before pausing print.</span>
+            </div>
         </div>
     </div>
 
